@@ -31,6 +31,7 @@ pub struct RRRuns {
 pub struct RRSeries {
     rr: Vec<f64>,
     annot: Vec<i32>,
+    column_names: Vec<String>,
     size: usize,
 }
 
@@ -367,10 +368,10 @@ impl RRRuns {
         let reference_offset = if reference_beat { 1 } else { 0 };
         for run in &self.accumulator.runs_addresses {
             if run[2] == run_type as i32 && run[1] == run_length {
-                let end_idx = run[0] as usize;
+                let end_idx = run[0] as usize + reference_beat as usize;
                 let length = (run[1] + reference_offset) as usize;
                 if length <= end_idx + 1 {
-                    let start_idx = end_idx + 1 - length;
+                    let start_idx = end_idx - length;
                     println!("start_idx: {}, end_idx: {}", start_idx, end_idx);
                     for idx in start_idx..=end_idx {
                         // inclusive range
@@ -388,10 +389,19 @@ impl RRSeries {
     pub fn read_rr(path: &str) -> io::Result<Self> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
+        let mut lines = reader.lines();
+
+        // reading header line
+        let header = lines
+            .next()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "empty file"))??;
+        let column_names: Vec<String> = header.split_whitespace().map(String::from).collect();
+
         let mut rr = Vec::new();
         let mut annot = Vec::new();
 
-        for line in reader.lines() {
+        // processing data rows
+        for line in lines {
             let line = line?;
             let values: Vec<&str> = line.split_whitespace().collect();
             if values.len() >= 2 {
@@ -402,6 +412,7 @@ impl RRSeries {
 
         Ok(RRSeries {
             size: rr.len(),
+            column_names,
             rr,
             annot,
         })
@@ -428,15 +439,15 @@ impl RRSeries {
 
 fn main() -> io::Result<()> {
     // reading from file
-    let rr_series = RRSeries::read_rr("test1.csv")?;
-    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, false);
+    let rr_series = RRSeries::read_rr("adamekRR.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
 
     // Get and print the full analysis
     rr.get_full_runs();
     rr.print_runs();
 
     // print specific run addresses
-    // rr.print_addresses(RunType::Dec, 2, false);
+    rr.print_addresses(RunType::Neu, 2, true);
 
     Ok(())
 }
