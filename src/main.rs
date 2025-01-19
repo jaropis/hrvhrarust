@@ -439,7 +439,7 @@ impl RRSeries {
 
 fn main() -> io::Result<()> {
     // reading from file
-    let rr_series = RRSeries::read_rr("adamekRR.csv")?;
+    let rr_series = RRSeries::read_rr("test2.csv")?;
     let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
 
     // Get and print the full analysis
