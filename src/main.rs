@@ -229,6 +229,7 @@ impl RRRuns {
                     }
                     if flag_neu {
                         self.accumulator.neu[index_neu] += 1;
+                        println!("index_neu at the last acceleration: {}", index_neu);
                         self.update_runs_addresses(vec![
                             running_rr_number as i32 - 1,
                             index_neu as i32,
@@ -243,6 +244,7 @@ impl RRRuns {
             }
 
             if self.rr_intervals[i - 1] == self.rr_intervals[i] && self.annotations[i - 1] == 0 {
+                println!("increasing the index_neu");
                 index_neu += 1;
                 if flag_neu {
                     running_rr_number += 1;
@@ -323,7 +325,9 @@ impl RRRuns {
 
         let dec_size = self.get_nonzero_length(&self.accumulator.dec);
         let acc_size = self.get_nonzero_length(&self.accumulator.acc);
-        let max_length = cmp::max(acc_size, dec_size);
+        let neu_size = self.get_nonzero_length(&self.accumulator.neu);
+        println!("ful neu accumulator size: {:?}", self.accumulator.neu);
+        let max_length = cmp::max(cmp::max(acc_size, dec_size), neu_size);
 
         println!("i  Ar - DR - N");
         for i in 1..max_length {
@@ -340,7 +344,7 @@ impl RRRuns {
                 } else {
                     0
                 },
-                if i < dec_size {
+                if i < neu_size {
                     self.accumulator.neu[i]
                 } else {
                     0
