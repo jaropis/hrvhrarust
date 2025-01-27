@@ -84,27 +84,36 @@ impl RRRuns {
         // rewinding to first good flag
         while running_rr_number < self.rr_intervals.len()
             && self.annotations[running_rr_number] != 0
+            && self.annotations[running_rr_number + 1] != 0
         {
             running_rr_number += 1;
         }
 
         // initializing flags
-        running_rr_number += 1;
-        if self.rr_intervals[running_rr_number - 1] < self.rr_intervals[running_rr_number] {
+        if self.rr_intervals[running_rr_number] < self.rr_intervals[running_rr_number + 1] {
             flag_dec = true;
             index_dec += 1;
+            // println!(
+            //     "1 increased index_dec from {} to {}, for RR at {} equal {} to for RR at {} equal {}",
+            //     index_dec - 1,
+            //     index_dec,
+            //     running_rr_number,
+            //     self.rr_intervals[running_rr_number],
+            //     running_rr_number + 1,
+            //     self.rr_intervals[running_rr_number + 1]
+            // );
         }
-        if self.rr_intervals[running_rr_number - 1] > self.rr_intervals[running_rr_number] {
+        if self.rr_intervals[running_rr_number] > self.rr_intervals[running_rr_number + 1] {
             flag_acc = true;
             index_acc += 1;
         }
-        if self.rr_intervals[running_rr_number - 1] == self.rr_intervals[running_rr_number] {
+        if self.rr_intervals[running_rr_number] == self.rr_intervals[running_rr_number + 1] {
             flag_neu = true;
             index_neu += 1;
         }
-
-        for i in (running_rr_number + 1)..self.rr_intervals.len() {
-            if self.annotations[i] != 0 {
+        running_rr_number += 1;
+        while running_rr_number < (self.rr_intervals.len() - 1) {
+            if self.annotations[running_rr_number + 1] != 0 {
                 if flag_dec {
                     self.accumulator.dec[index_dec] += 1;
                     self.update_runs_addresses(vec![
@@ -112,7 +121,6 @@ impl RRRuns {
                         index_dec as i32,
                         RunType::Dec as i32,
                     ]);
-                    running_rr_number += 1;
                 }
                 if flag_acc {
                     self.accumulator.acc[index_acc] += 1;
@@ -138,54 +146,63 @@ impl RRRuns {
                 flag_dec = false;
                 flag_neu = false;
 
-                // rewinding to first good rr_(n-1)
-                while self.annotations[running_rr_number - 1] != 0 {
+                // rewinding to last bad beat
+                while self.annotations[running_rr_number + 1] != 0 {
                     running_rr_number += 1;
                     if running_rr_number >= self.rr_intervals.len() {
                         break;
                     }
                 }
-                // restarting the flags
-                running_rr_number += 1; // skipping the first good beat, because it is a reference beat all over again
-                                        // reinitializing flags using the reference beat
+                running_rr_number += 1; // rewinding to the first good, which will become the reference
+                                        // restarting the flags
                 if running_rr_number < self.rr_intervals.len() - 1 {
-                    if self.rr_intervals[running_rr_number - 1]
-                        < self.rr_intervals[running_rr_number]
-                        && self.annotations[running_rr_number - 1] == 0
-                        && self.annotations[running_rr_number] == 0
+                    if self.rr_intervals[running_rr_number]
+                        < self.rr_intervals[running_rr_number + 1]
+                        && self.annotations[running_rr_number + 1] == 0
                     {
                         flag_dec = true;
                         index_dec += 1;
+                        // println!(
+                        //     "2 increased index_dec from {} to {}, for RR at {} equal {} to for RR at {} equal {}",
+                        //     index_dec - 1,
+                        //     index_dec,
+                        //     running_rr_number,
+                        //     self.rr_intervals[running_rr_number],
+                        //     running_rr_number + 1,
+                        //     self.rr_intervals[running_rr_number + 1]
+                        // );
                     }
-                    if self.rr_intervals[running_rr_number - 1]
-                        > self.rr_intervals[running_rr_number]
-                        && self.annotations[running_rr_number - 1] == 0
-                        && self.annotations[running_rr_number] == 0
+                    if self.rr_intervals[running_rr_number]
+                        > self.rr_intervals[running_rr_number + 1]
+                        && self.annotations[running_rr_number + 1] == 0
                     {
                         flag_acc = true;
                         index_acc += 1;
                     }
-                    if self.rr_intervals[running_rr_number - 1]
-                        == self.rr_intervals[running_rr_number]
-                        && self.annotations[running_rr_number - 1] == 0
-                        && self.annotations[running_rr_number] == 0
+                    if self.rr_intervals[running_rr_number]
+                        == self.rr_intervals[running_rr_number + 1]
+                        && self.annotations[running_rr_number + 1] == 0
                     {
                         flag_neu = true;
                         index_neu += 1;
                     }
                 }
+                running_rr_number += 1; // for the next turn of the loop, because we are continuing
                 continue;
             }
 
-            if i >= self.rr_intervals.len() {
+            if running_rr_number >= self.rr_intervals.len() - 1 {
+                // TODO: Do I need this?
                 break;
             }
-
-            if self.rr_intervals[i - 1] < self.rr_intervals[i]
-                && self.annotations[i - 1] == 0
-                && self.annotations[i] == 0
+            let current = self.rr_intervals[running_rr_number];
+            let next = self.rr_intervals[running_rr_number + 1];
+            if current < next
+                && self.annotations[running_rr_number] == 0
+                && self.annotations[running_rr_number + 1] == 0
             {
                 index_dec += 1;
+                //println!("3 increased index_dec from {} to {}, for RR at {} equal {} to for RR at {} equal {}", index_dec - 1, index_dec, running_rr_number, current, running_rr_number + 1, next);
                 if flag_dec {
                     running_rr_number += 1;
                 } else {
@@ -216,9 +233,9 @@ impl RRRuns {
                 }
             }
 
-            if self.rr_intervals[i - 1] > self.rr_intervals[i]
-                && self.annotations[i - 1] == 0
-                && self.annotations[i] == 0
+            if current > next
+                && self.annotations[running_rr_number] == 0
+                && self.annotations[running_rr_number + 1] == 0
             {
                 index_acc += 1;
                 if flag_acc {
@@ -251,9 +268,9 @@ impl RRRuns {
                 }
             }
 
-            if self.rr_intervals[i - 1] == self.rr_intervals[i]
-                && self.annotations[i - 1] == 0
-                && self.annotations[i] == 0
+            if current == next
+                && self.annotations[running_rr_number] == 0
+                && self.annotations[running_rr_number + 1] == 0
             {
                 index_neu += 1;
                 if flag_neu {
@@ -286,6 +303,7 @@ impl RRRuns {
                 }
             }
         }
+
         // writing last run if needed
         if self.write_last_run {
             if index_acc > 0 {
@@ -468,7 +486,6 @@ fn main() -> io::Result<()> {
     rr.get_full_runs();
     rr.print_runs();
 
-    // print specific run addresses
     //rr.print_addresses(RunType::Neu, 2, true);
     println!("expected output: \n2 2 1\n 0 0 1");
 
@@ -480,6 +497,6 @@ fn main() -> io::Result<()> {
     rr.print_runs();
 
     println!("expected output: \n1 1 1\n 0 0 1");
-    rr.print_addresses(RunType::Dec, 2, true);
+    // rr.print_addresses(RunType::Dec, 2, true);
     Ok(())
 }
