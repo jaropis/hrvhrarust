@@ -1,4 +1,5 @@
 use std::cmp;
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
@@ -80,12 +81,14 @@ impl RRRuns {
         let mut index_acc = 0;
         let mut index_neu = 0;
         let mut running_rr_number = 0;
-
         // rewinding to first good flag
         while running_rr_number < self.rr_intervals.len()
-            && self.annotations[running_rr_number] != 0
-            && self.annotations[running_rr_number + 1] != 0
+            && (self.annotations[running_rr_number] != 0
+                || self.annotations[running_rr_number + 1] != 0)
         {
+            if running_rr_number == self.rr_intervals.len() - 1 {
+                return; // returning early if we have jumped over all the recording and found no viable runs - this is an edge case
+            }
             running_rr_number += 1;
         }
 
@@ -138,11 +141,13 @@ impl RRRuns {
                 flag_neu = false;
 
                 // rewinding to last bad beat
-                while self.annotations[running_rr_number + 1] != 0 {
-                    running_rr_number += 1;
-                    if running_rr_number >= self.rr_intervals.len() {
-                        break;
+                while self.annotations[running_rr_number] != 0
+                    || self.annotations[running_rr_number + 1] != 0
+                {
+                    if running_rr_number >= self.rr_intervals.len() - 1 {
+                        return;
                     }
+                    running_rr_number += 1;
                 }
                 running_rr_number += 1; // rewinding to the first good, which will become the reference
                                         // restarting the flags
@@ -177,114 +182,110 @@ impl RRRuns {
                 // TODO: Do I need this?
                 break;
             }
-            let current = self.rr_intervals[running_rr_number];
-            let next = self.rr_intervals[running_rr_number + 1];
-            if current < next
-                && self.annotations[running_rr_number] == 0
-                && self.annotations[running_rr_number + 1] == 0
-            {
-                index_dec += 1;
-                if flag_dec {
-                    running_rr_number += 1;
+            // getting the values once at the start
+            #[derive(Debug)]
+            enum Comparison {
+                Greater,
+                Smaller,
+                Equal,
+            }
+            let both_normal = self.annotations[running_rr_number] == 0
+                && self.annotations[running_rr_number + 1] == 0;
+
+            if both_normal {
+                let comparison = if self.rr_intervals[running_rr_number + 1]
+                    > self.rr_intervals[running_rr_number]
+                {
+                    Comparison::Greater
+                } else if self.rr_intervals[running_rr_number + 1]
+                    < self.rr_intervals[running_rr_number]
+                {
+                    Comparison::Smaller
                 } else {
-                    if flag_acc {
-                        self.accumulator.acc[index_acc] += 1;
-                        self.update_runs_addresses(vec![
-                            running_rr_number as i32 - 1, // -1 because at i a new run starts, so the previous ends at -1
-                            index_acc as i32,
-                            RunType::Acc as i32,
-                        ]);
-                        running_rr_number += 1;
-                        index_acc = 0;
-                        flag_acc = false;
-                        flag_dec = true;
+                    Comparison::Equal
+                };
+
+                match comparison {
+                    Comparison::Greater => {
+                        index_dec += 1;
+                        if !flag_dec {
+                            if flag_acc {
+                                self.accumulator.acc[index_acc] += 1;
+                                self.update_runs_addresses(vec![
+                                    running_rr_number as i32 - 1,
+                                    index_acc as i32,
+                                    RunType::Acc as i32,
+                                ]);
+                                index_acc = 0;
+                                flag_acc = false;
+                            } else if flag_neu {
+                                self.accumulator.neu[index_neu] += 1;
+                                self.update_runs_addresses(vec![
+                                    running_rr_number as i32 - 1,
+                                    index_neu as i32,
+                                    RunType::Neu as i32,
+                                ]);
+                                index_neu = 0;
+                                flag_neu = false;
+                            }
+                            flag_dec = true;
+                        }
                     }
-                    if flag_neu {
-                        self.accumulator.neu[index_neu] += 1;
-                        self.update_runs_addresses(vec![
-                            running_rr_number as i32 - 1,
-                            index_neu as i32,
-                            RunType::Neu as i32,
-                        ]);
-                        running_rr_number += 1;
-                        index_neu = 0;
-                        flag_neu = false;
-                        flag_dec = true;
+                    Comparison::Smaller => {
+                        index_acc += 1;
+                        if !flag_acc {
+                            if flag_dec {
+                                self.accumulator.dec[index_dec] += 1;
+                                self.update_runs_addresses(vec![
+                                    running_rr_number as i32 - 1,
+                                    index_dec as i32,
+                                    RunType::Dec as i32,
+                                ]);
+                                index_dec = 0;
+                                flag_dec = false;
+                            } else if flag_neu {
+                                self.accumulator.neu[index_neu] += 1;
+                                self.update_runs_addresses(vec![
+                                    running_rr_number as i32 - 1,
+                                    index_neu as i32,
+                                    RunType::Neu as i32,
+                                ]);
+                                index_neu = 0;
+                                flag_neu = false;
+                            }
+                            flag_acc = true;
+                        }
+                    }
+                    Comparison::Equal => {
+                        index_neu += 1;
+                        if !flag_neu {
+                            if flag_dec {
+                                self.accumulator.dec[index_dec] += 1;
+                                self.update_runs_addresses(vec![
+                                    running_rr_number as i32 - 1,
+                                    index_dec as i32,
+                                    RunType::Dec as i32,
+                                ]);
+                                index_dec = 0;
+                                flag_dec = false;
+                            } else if flag_acc {
+                                self.accumulator.acc[index_acc] += 1;
+                                self.update_runs_addresses(vec![
+                                    running_rr_number as i32 - 1,
+                                    index_acc as i32,
+                                    RunType::Acc as i32,
+                                ]);
+                                index_acc = 0;
+                                flag_acc = false;
+                            }
+                            flag_neu = true;
+                        }
                     }
                 }
             }
 
-            if current > next
-                && self.annotations[running_rr_number] == 0
-                && self.annotations[running_rr_number + 1] == 0
-            {
-                index_acc += 1;
-                if flag_acc {
-                    running_rr_number += 1;
-                } else {
-                    if flag_dec {
-                        self.accumulator.dec[index_dec] += 1;
-                        self.update_runs_addresses(vec![
-                            running_rr_number as i32 - 1,
-                            index_dec as i32,
-                            RunType::Dec as i32,
-                        ]);
-                        running_rr_number += 1;
-                        index_dec = 0;
-                        flag_dec = false;
-                        flag_acc = true;
-                    }
-                    if flag_neu {
-                        self.accumulator.neu[index_neu] += 1;
-                        self.update_runs_addresses(vec![
-                            running_rr_number as i32 - 1,
-                            index_neu as i32,
-                            RunType::Neu as i32,
-                        ]);
-                        running_rr_number += 1;
-                        index_neu = 0;
-                        flag_neu = false;
-                        flag_acc = true;
-                    }
-                }
-            }
-
-            if current == next
-                && self.annotations[running_rr_number] == 0
-                && self.annotations[running_rr_number + 1] == 0
-            {
-                index_neu += 1;
-                if flag_neu {
-                    running_rr_number += 1;
-                } else {
-                    if flag_dec {
-                        self.accumulator.dec[index_dec] += 1;
-                        self.update_runs_addresses(vec![
-                            running_rr_number as i32 - 1,
-                            index_dec as i32,
-                            RunType::Dec as i32,
-                        ]);
-                        running_rr_number += 1;
-                        index_dec = 0;
-                        flag_dec = false;
-                        flag_neu = true;
-                    }
-                    if flag_acc {
-                        self.accumulator.acc[index_acc] += 1;
-                        self.update_runs_addresses(vec![
-                            running_rr_number as i32 - 1,
-                            index_acc as i32,
-                            RunType::Acc as i32,
-                        ]);
-                        running_rr_number += 1;
-                        index_acc = 0;
-                        flag_acc = false;
-                        flag_neu = true;
-                    }
-                }
-            }
+            running_rr_number += 1;
         }
-
         // writing last run if needed
         if self.write_last_run {
             if index_acc > 0 {
@@ -451,7 +452,8 @@ impl RRSeries {
 // }
 
 fn main() -> io::Result<()> {
-    // reading from file
+    //reading from file
+    println!("Test 1");
     let rr_series = RRSeries::read_rr("test1.csv")?;
     let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
 
@@ -459,7 +461,7 @@ fn main() -> io::Result<()> {
     rr.get_full_runs();
     rr.print_runs();
     println!("expected output:\n1 2 0");
-
+    println!("Test 2");
     let rr_series = RRSeries::read_rr("test2.csv")?;
     let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
 
@@ -469,7 +471,7 @@ fn main() -> io::Result<()> {
 
     //rr.print_addresses(RunType::Neu, 2, true);
     println!("expected output: \n2 2 1\n 0 0 1");
-
+    println!("Test 3");
     let rr_series = RRSeries::read_rr("test3.csv")?;
     let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
 
@@ -479,5 +481,27 @@ fn main() -> io::Result<()> {
 
     println!("expected output: \n1 1 1\n 0 0 1");
     // rr.print_addresses(RunType::Dec, 2, true);
+    println!("Test 4");
+    let rr_series = RRSeries::read_rr("test4.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+
+    // Get and print the full analysis
+    rr.get_full_runs();
+    rr.print_runs();
+
+    println!("expected output: \n0 0 0");
+    // rr.print_addresses(RunType::Dec, 2, true);
+
+    println!("Test 5");
+    let rr_series = RRSeries::read_rr("test5.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+
+    // Get and print the full analysis
+    rr.get_full_runs();
+    rr.print_runs();
+
+    println!("expected output: \n0 1 1");
+    // rr.print_addresses(RunType::Dec, 2, true);
+
     Ok(())
 }
