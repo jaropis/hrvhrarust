@@ -93,15 +93,6 @@ impl RRRuns {
         if self.rr_intervals[running_rr_number] < self.rr_intervals[running_rr_number + 1] {
             flag_dec = true;
             index_dec += 1;
-            // println!(
-            //     "1 increased index_dec from {} to {}, for RR at {} equal {} to for RR at {} equal {}",
-            //     index_dec - 1,
-            //     index_dec,
-            //     running_rr_number,
-            //     self.rr_intervals[running_rr_number],
-            //     running_rr_number + 1,
-            //     self.rr_intervals[running_rr_number + 1]
-            // );
         }
         if self.rr_intervals[running_rr_number] > self.rr_intervals[running_rr_number + 1] {
             flag_acc = true;
@@ -162,15 +153,6 @@ impl RRRuns {
                     {
                         flag_dec = true;
                         index_dec += 1;
-                        // println!(
-                        //     "2 increased index_dec from {} to {}, for RR at {} equal {} to for RR at {} equal {}",
-                        //     index_dec - 1,
-                        //     index_dec,
-                        //     running_rr_number,
-                        //     self.rr_intervals[running_rr_number],
-                        //     running_rr_number + 1,
-                        //     self.rr_intervals[running_rr_number + 1]
-                        // );
                     }
                     if self.rr_intervals[running_rr_number]
                         > self.rr_intervals[running_rr_number + 1]
@@ -202,7 +184,6 @@ impl RRRuns {
                 && self.annotations[running_rr_number + 1] == 0
             {
                 index_dec += 1;
-                //println!("3 increased index_dec from {} to {}, for RR at {} equal {} to for RR at {} equal {}", index_dec - 1, index_dec, running_rr_number, current, running_rr_number + 1, next);
                 if flag_dec {
                     running_rr_number += 1;
                 } else {
