@@ -145,13 +145,14 @@ impl RRRuns {
                         break;
                     }
                 }
-                // restarging the flags
+                // restarting the flags
                 running_rr_number += 1; // skipping the first good beat, because it is a reference beat all over again
                                         // reinitializing flags using the reference beat
                 if running_rr_number < self.rr_intervals.len() - 1 {
                     if self.rr_intervals[running_rr_number - 1]
                         < self.rr_intervals[running_rr_number]
                         && self.annotations[running_rr_number - 1] == 0
+                        && self.annotations[running_rr_number] == 0
                     {
                         flag_dec = true;
                         index_dec += 1;
@@ -159,6 +160,7 @@ impl RRRuns {
                     if self.rr_intervals[running_rr_number - 1]
                         > self.rr_intervals[running_rr_number]
                         && self.annotations[running_rr_number - 1] == 0
+                        && self.annotations[running_rr_number] == 0
                     {
                         flag_acc = true;
                         index_acc += 1;
@@ -166,6 +168,7 @@ impl RRRuns {
                     if self.rr_intervals[running_rr_number - 1]
                         == self.rr_intervals[running_rr_number]
                         && self.annotations[running_rr_number - 1] == 0
+                        && self.annotations[running_rr_number] == 0
                     {
                         flag_neu = true;
                         index_neu += 1;
@@ -178,7 +181,10 @@ impl RRRuns {
                 break;
             }
 
-            if self.rr_intervals[i - 1] < self.rr_intervals[i] && self.annotations[i - 1] == 0 {
+            if self.rr_intervals[i - 1] < self.rr_intervals[i]
+                && self.annotations[i - 1] == 0
+                && self.annotations[i] == 0
+            {
                 index_dec += 1;
                 if flag_dec {
                     running_rr_number += 1;
@@ -210,7 +216,10 @@ impl RRRuns {
                 }
             }
 
-            if self.rr_intervals[i - 1] > self.rr_intervals[i] && self.annotations[i - 1] == 0 {
+            if self.rr_intervals[i - 1] > self.rr_intervals[i]
+                && self.annotations[i - 1] == 0
+                && self.annotations[i] == 0
+            {
                 index_acc += 1;
                 if flag_acc {
                     running_rr_number += 1;
@@ -229,7 +238,6 @@ impl RRRuns {
                     }
                     if flag_neu {
                         self.accumulator.neu[index_neu] += 1;
-                        println!("index_neu at the last acceleration: {}", index_neu);
                         self.update_runs_addresses(vec![
                             running_rr_number as i32 - 1,
                             index_neu as i32,
@@ -243,8 +251,10 @@ impl RRRuns {
                 }
             }
 
-            if self.rr_intervals[i - 1] == self.rr_intervals[i] && self.annotations[i - 1] == 0 {
-                println!("increasing the index_neu");
+            if self.rr_intervals[i - 1] == self.rr_intervals[i]
+                && self.annotations[i - 1] == 0
+                && self.annotations[i] == 0
+            {
                 index_neu += 1;
                 if flag_neu {
                     running_rr_number += 1;
@@ -326,7 +336,7 @@ impl RRRuns {
         let dec_size = self.get_nonzero_length(&self.accumulator.dec);
         let acc_size = self.get_nonzero_length(&self.accumulator.acc);
         let neu_size = self.get_nonzero_length(&self.accumulator.neu);
-        println!("ful neu accumulator size: {:?}", self.accumulator.neu);
+        //println!("ful neu accumulator size: {:?}", self.accumulator.neu);
         let max_length = cmp::max(cmp::max(acc_size, dec_size), neu_size);
 
         println!("i  Ar - DR - N");
@@ -443,6 +453,14 @@ impl RRSeries {
 
 fn main() -> io::Result<()> {
     // reading from file
+    let rr_series = RRSeries::read_rr("test1.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+
+    // Get and print the full analysis
+    rr.get_full_runs();
+    rr.print_runs();
+    println!("expected output:\n1 2 0");
+
     let rr_series = RRSeries::read_rr("test2.csv")?;
     let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
 
@@ -451,7 +469,17 @@ fn main() -> io::Result<()> {
     rr.print_runs();
 
     // print specific run addresses
-    rr.print_addresses(RunType::Neu, 2, true);
+    //rr.print_addresses(RunType::Neu, 2, true);
+    println!("expected output: \n2 2 1\n 0 0 1");
 
+    let rr_series = RRSeries::read_rr("test3.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+
+    // Get and print the full analysis
+    rr.get_full_runs();
+    rr.print_runs();
+
+    println!("expected output: \n1 1 1\n 0 0 1");
+    rr.print_addresses(RunType::Dec, 2, true);
     Ok(())
 }
