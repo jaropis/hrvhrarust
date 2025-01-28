@@ -97,7 +97,6 @@ impl RRRuns {
         if self.rr_intervals[running_rr_number] < self.rr_intervals[running_rr_number + 1] {
             flag_dec = true;
             index_dec += 1;
-            println!("3 increased dec");
         }
         if self.rr_intervals[running_rr_number] > self.rr_intervals[running_rr_number + 1] {
             flag_acc = true;
@@ -109,9 +108,7 @@ impl RRRuns {
         }
         running_rr_number += 1;
         while running_rr_number < (self.rr_intervals.len() - 1) {
-            println!("running_rr_number na poczatku petli: {}", running_rr_number);
             if self.annotations[running_rr_number + 1] != 0 {
-                println!("wlazl do ektopa, running_rr_number: {}", running_rr_number);
                 if flag_dec {
                     self.accumulator.dec[index_dec] += 1;
                     self.update_runs_addresses(vec![
@@ -136,14 +133,12 @@ impl RRRuns {
                         RunType::Neu as i32,
                     ]);
                 }
-                println!("1 w ektopie, running_rr_number: {}", running_rr_number);
                 index_dec = 0;
                 index_acc = 0;
                 index_neu = 0;
                 flag_acc = false;
                 flag_dec = false;
                 flag_neu = false;
-                println!("2 w ektopie, running_rr_number: {}", running_rr_number);
                 // rewinding to last bad beat
                 while self.annotations[running_rr_number] != 0
                     || self.annotations[running_rr_number + 1] != 0
@@ -154,7 +149,6 @@ impl RRRuns {
                         return;
                     }
                 }
-                println!("3 w ektopie, running_rr_number: {}", running_rr_number);
                 if running_rr_number < self.rr_intervals.len() - 1 {
                     if self.rr_intervals[running_rr_number]
                         < self.rr_intervals[running_rr_number + 1]
@@ -178,7 +172,6 @@ impl RRRuns {
                         index_neu += 1;
                     }
                 }
-                println!("4 w ektopie, running_rr_number: {}", running_rr_number);
                 running_rr_number += 1; // for the next turn of the loop, because we are continuing
                 continue;
             }
@@ -209,10 +202,8 @@ impl RRRuns {
                 } else {
                     Comparison::Equal
                 };
-                println!("before match, running_rr_number: {}", running_rr_number);
                 match comparison {
                     Comparison::Greater => {
-                        println!("2 increased dec, running_rr_number {}", running_rr_number);
                         index_dec += 1;
                         if !flag_dec {
                             if flag_acc {
@@ -290,7 +281,6 @@ impl RRRuns {
                 }
             }
             running_rr_number += 1;
-            println!("running_rr_number after increase {}", running_rr_number);
         }
         // writing last run if needed
         if self.write_last_run {
