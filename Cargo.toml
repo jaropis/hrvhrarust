@@ -1,9 +1,21 @@
 [package]
-name = "runs_rust"
+name = "hrvhra_rust"
 version = "0.1.0"
 edition = "2021"
+description = "A library for analyzing RR intervals from ECG data"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "hrvhra_rust"
+path = "src/lib.rs"
+# This makes it usable as a Rust library. Later when adding R bindings, 
+# you'll add "cdylib" to this array
+crate-type = ["rlib"]
 
 [dependencies]
 csv = "1.1"
+# Add any external dependencies here when needed
+
+[dev-dependencies]
+# Dependencies only used in tests can go here
+
+
