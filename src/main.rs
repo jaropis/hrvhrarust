@@ -55,6 +55,45 @@ impl RRRuns {
             analyzed: false,
         }
     }
+    pub fn get_runs_summary(&self) -> Vec<Vec<i32>> {
+        // getting length of non-zero elements
+        let dec_size = self.get_nonzero_length(&self.accumulator.dec);
+        let acc_size = self.get_nonzero_length(&self.accumulator.acc);
+        let neu_size = self.get_nonzero_length(&self.accumulator.neu);
+
+        // calculating max length to determine number of rows needed
+        let max_length = cmp::max(cmp::max(acc_size, dec_size), neu_size);
+
+        // building summary rows
+        let mut summary = Vec::new();
+        for i in 1..max_length {
+            let row = vec![
+                if i < acc_size {
+                    self.accumulator.acc[i]
+                } else {
+                    0
+                },
+                if i < dec_size {
+                    self.accumulator.dec[i]
+                } else {
+                    0
+                },
+                if i < neu_size {
+                    self.accumulator.neu[i]
+                } else {
+                    0
+                },
+            ];
+            summary.push(row);
+        }
+
+        // if summary is empty (no runs found), return a single row of zeros
+        if summary.is_empty() {
+            summary.push(vec![0, 0, 0]);
+        }
+
+        summary
+    }
 
     // getting nonzero length of a vector
     fn get_nonzero_length(&self, vec: &[i32]) -> usize {
@@ -429,24 +468,84 @@ impl RRSeries {
     }
 }
 
-// fn main() -> io::Result<()> {
-//     // example usage with hardcoded data
-//     let rr_data = vec![1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0, 0.0];
-//     let annot_data = vec![0, 0, 1, 0, 0, 1, 0, 0];
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     // let rr_data = vec![   1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0, 0.0];
-//     // let annot_data = vec![0,   0,   1,   0,   0,   1,   0,   0];
+    #[test]
+    fn test_case_1() -> io::Result<()> {
+        // reading test data
+        let rr_series = RRSeries::read_rr("test1.csv")?;
+        let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
 
-//     let mut rr = RRRuns::new(rr_data, annot_data, true);
-//     rr.print_runs();
+        // getting full analysis
+        rr.get_full_runs();
 
-//     rr.print_addresses(RunType::Dec, 1, false);
-//     rr.print_addresses(RunType::Acc, 1, false);
-//     //rr.print_addresses(RunType::Acc, 1, true);
+        // asserting expected results - note the double vec![]
+        assert_eq!(rr.get_runs_summary(), vec![vec![1, 2, 0]]);
+        Ok(())
+    }
 
-//     Ok(())
-// }
+    #[test]
+    fn test_case_2() -> io::Result<()> {
+        let rr_series = RRSeries::read_rr("test2.csv")?;
+        let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+        rr.get_full_runs();
 
+        assert_eq!(rr.get_runs_summary(), vec![vec![2, 2, 1], vec![0, 0, 1]]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_case_3() -> io::Result<()> {
+        let rr_series = RRSeries::read_rr("test3.csv")?;
+        let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+        rr.get_full_runs();
+
+        assert_eq!(rr.get_runs_summary(), vec![vec![1, 1, 1], vec![0, 0, 1]]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_case_4() -> io::Result<()> {
+        let rr_series = RRSeries::read_rr("test4.csv")?;
+        let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+        rr.get_full_runs();
+
+        assert_eq!(rr.get_runs_summary(), vec![vec![0, 0, 0]]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_case_5() -> io::Result<()> {
+        let rr_series = RRSeries::read_rr("test5.csv")?;
+        let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+        rr.get_full_runs();
+
+        assert_eq!(rr.get_runs_summary(), vec![vec![0, 1, 1]]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_case_6() -> io::Result<()> {
+        let rr_series = RRSeries::read_rr("test6.csv")?;
+        let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+        rr.get_full_runs();
+
+        assert_eq!(rr.get_runs_summary(), vec![vec![0, 1, 0]]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_case_7() -> io::Result<()> {
+        let rr_series = RRSeries::read_rr("test7.csv")?;
+        let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+        rr.get_full_runs();
+
+        assert_eq!(rr.get_runs_summary(), vec![vec![1, 2, 0], vec![0, 0, 1]]);
+        Ok(())
+    }
+}
 fn main() -> io::Result<()> {
     //reading from file
     println!("Test 1");
@@ -497,6 +596,27 @@ fn main() -> io::Result<()> {
     rr.print_runs();
 
     println!("expected output: \n0 1 1");
+    // rr.print_addresses(RunType::Dec, 2, true);
+
+    println!("Test 6");
+    let rr_series = RRSeries::read_rr("test6.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+
+    // Get and print the full analysis
+    rr.get_full_runs();
+    rr.print_runs();
+
+    println!("expected output: \n0 1 0");
+    // rr.print_addresses(RunType::Dec, 2, true);
+
+    let rr_series = RRSeries::read_rr("test7.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+
+    // Get and print the full analysis
+    rr.get_full_runs();
+    rr.print_runs();
+
+    println!("expected output: \n1 2 0\n0 0 1");
     // rr.print_addresses(RunType::Dec, 2, true);
 
     Ok(())
