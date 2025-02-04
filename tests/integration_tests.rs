@@ -3,6 +3,7 @@ use std::io;
 use hrvhra_rust::data_reader::RRSeries;
 use hrvhra_rust::runs::RRRuns;
 
+// runs integration tests
 #[test]
 fn test_case_1() -> io::Result<()> {
     // reading test data
@@ -74,5 +75,36 @@ fn test_case_7() -> io::Result<()> {
     rr.get_full_runs();
 
     assert_eq!(rr.get_runs_summary(), vec![vec![1, 2, 0], vec![0, 0, 1]]);
+    Ok(())
+}
+
+// sample entropy integration tests
+#[test]
+fn test_entropy_case_1() -> io::Result<()> {
+    let rr_series = RRSeries::read_rr("tests/data/test1.csv")?;
+    let sampen = hrvhra_rust::samp_en::calc_samp_en(
+        &rr_series.rr,
+        0.2 * rr_series.rr.iter().sum::<f64>() / rr_series.rr.len() as f64,
+    );
+    assert!(sampen.is_finite());
+    Ok(())
+}
+
+#[test]
+fn test_entropy_case_2() -> io::Result<()> {
+    let rr_series = RRSeries::read_rr("tests/data/test2.csv")?;
+    let r = 0.2 * rr_series.rr.iter().sum::<f64>() / rr_series.rr.len() as f64;
+    let sampen = hrvhra_rust::samp_en::calc_samp_en(&rr_series.rr, r);
+    assert!(sampen.is_finite());
+    Ok(())
+}
+
+#[test]
+fn test_entropy_known_values() -> io::Result<()> {
+    // using a simple signal with known properties
+    let signal = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+    let r = 0.5;
+    let sampen = hrvhra_rust::samp_en::calc_samp_en(&signal, r);
+    assert!(!sampen.is_finite());
     Ok(())
 }

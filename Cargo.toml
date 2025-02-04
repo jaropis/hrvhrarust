@@ -13,6 +13,7 @@ crate-type = ["rlib"]
 
 [dependencies]
 csv = "1.1"
+ndarray = "0.16.1"
 # Add any external dependencies here when needed
 
 [dev-dependencies]
