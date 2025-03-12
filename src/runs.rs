@@ -44,7 +44,10 @@ impl RRRuns {
             analyzed: false,
         }
     }
-    pub fn get_runs_summary(&self) -> Vec<Vec<i32>> {
+    pub fn get_runs_summary(&mut self) -> Vec<Vec<i32>> {
+        if !self.analyzed {
+            self.analyze_runs();
+        }
         // getting length of non-zero elements
         let dec_size = self.get_nonzero_length(&self.accumulator.dec);
         let acc_size = self.get_nonzero_length(&self.accumulator.acc);
