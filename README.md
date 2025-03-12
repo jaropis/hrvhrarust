@@ -1,8 +1,8 @@
-# Runs Rust Library
+# hrvhra rust Library
 
 ## Overview
 
-Runs Rust is a Rust library designed for analyzing and processing run data sequences. It provides efficient algorithms and data structures for working with time series, patterns, and statistical analysis of runs.
+hrvhra rust is a Rust library designed for analyzing and processing RR intervals and similar data sequences. It provides efficient algorithms and data structures for working with time series, patterns, HRV and complexity parameters.
 
 ## Installation
 
@@ -28,7 +28,7 @@ fn main() {
 
 ### Sample Entropy
 
-The library includes functionality to calculate Sample Entropy (SampEn), which measures the complexity of time series data by quantifying the unpredictability of fluctuations:
+The library includes functionality to calculate Sample Entropy (SampEn), which measures the complexity of time series data by quantifying the unpredictability of fluctuations. This library implements Zurek's NCM algorithm:
 
 ```rust
 use runs_rust::samp_en;
@@ -60,10 +60,6 @@ Sample Entropy is particularly useful for analyzing physiological signals, finan
 - Thread-safe implementations
 - Minimal dependencies
 - Sample Entropy calculation for time series complexity analysis
-
-## Documentation
-
-Full documentation is available at [docs.rs/runs_rust](https://docs.rs/runs_rust).
 
 ## Contributing
 
