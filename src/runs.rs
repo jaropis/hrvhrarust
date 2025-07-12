@@ -1,7 +1,7 @@
 use std::cmp;
-
+use std::collections::HashMap;
 // defining run types
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RunType {
     Dec = 1,  // deceleration run
     Neu = 0,  // neutral run
@@ -422,5 +422,20 @@ impl RRRuns {
                 }
             }
         }
+    }
+
+    pub fn print_runs_addresses(&self) {
+        for run in &self.accumulator.runs_addresses {
+            println!("{:?}", run)
+        }
+    }
+
+    pub fn get_runs_variances(addresses: &[(i32, i32, RunType)]) -> HashMap<RunType, Vec<f32>> {
+        let mut variances = HashMap::new();
+        for &(rr_index, length, run_type) in addresses {
+            variances.insert(RunType::Dec, vec![3.3]);
+        }
+
+        return variances;
     }
 }
