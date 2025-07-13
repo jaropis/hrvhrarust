@@ -111,6 +111,7 @@ impl RRRuns {
 
     // updating runs addresses
     fn update_runs_addresses(&mut self, new_entry: Vec<i32>) {
+        println!("entry: {:?}", new_entry);
         self.accumulator.runs_addresses.push(new_entry);
     }
 
@@ -134,7 +135,7 @@ impl RRRuns {
             }
             running_rr_number += 1;
         }
-
+        println!("running_rr_number: {}", running_rr_number);
         // initializing flags
         if self.rr_intervals[running_rr_number] < self.rr_intervals[running_rr_number + 1] {
             flag_dec = true;
@@ -152,6 +153,7 @@ impl RRRuns {
         while running_rr_number < (self.rr_intervals.len() - 1) {
             if self.annotations[running_rr_number + 1] != 0 {
                 if flag_dec {
+                    println!("11");
                     self.accumulator.dec[index_dec] += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
@@ -160,6 +162,7 @@ impl RRRuns {
                     ]);
                 }
                 if flag_acc {
+                    println!("12");
                     self.accumulator.acc[index_acc] += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
@@ -168,6 +171,7 @@ impl RRRuns {
                     ]);
                 }
                 if flag_neu {
+                    println!("13");
                     self.accumulator.neu[index_neu] += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
@@ -249,18 +253,20 @@ impl RRRuns {
                         index_dec += 1;
                         if !flag_dec {
                             if flag_acc {
+                                println!("21");
                                 self.accumulator.acc[index_acc] += 1;
                                 self.update_runs_addresses(vec![
-                                    running_rr_number as i32 - 1,
+                                    running_rr_number as i32,
                                     index_acc as i32,
                                     RunType::Acc as i32,
                                 ]);
                                 index_acc = 0;
                                 flag_acc = false;
                             } else if flag_neu {
+                                println!("22");
                                 self.accumulator.neu[index_neu] += 1;
                                 self.update_runs_addresses(vec![
-                                    running_rr_number as i32 - 1,
+                                    running_rr_number as i32,
                                     index_neu as i32,
                                     RunType::Neu as i32,
                                 ]);
@@ -274,18 +280,21 @@ impl RRRuns {
                         index_acc += 1;
                         if !flag_acc {
                             if flag_dec {
+                                println!("23");
+                                println!("running_rr_number: {}", running_rr_number);
                                 self.accumulator.dec[index_dec] += 1;
                                 self.update_runs_addresses(vec![
-                                    running_rr_number as i32 - 1,
+                                    running_rr_number as i32,
                                     index_dec as i32,
                                     RunType::Dec as i32,
                                 ]);
                                 index_dec = 0;
                                 flag_dec = false;
                             } else if flag_neu {
+                                println!("24");
                                 self.accumulator.neu[index_neu] += 1;
                                 self.update_runs_addresses(vec![
-                                    running_rr_number as i32 - 1,
+                                    running_rr_number as i32,
                                     index_neu as i32,
                                     RunType::Neu as i32,
                                 ]);
@@ -299,18 +308,20 @@ impl RRRuns {
                         index_neu += 1;
                         if !flag_neu {
                             if flag_dec {
+                                println!("25");
                                 self.accumulator.dec[index_dec] += 1;
                                 self.update_runs_addresses(vec![
-                                    running_rr_number as i32 - 1,
+                                    running_rr_number as i32,
                                     index_dec as i32,
                                     RunType::Dec as i32,
                                 ]);
                                 index_dec = 0;
                                 flag_dec = false;
                             } else if flag_acc {
+                                println!("26");
                                 self.accumulator.acc[index_acc] += 1;
                                 self.update_runs_addresses(vec![
-                                    running_rr_number as i32 - 1,
+                                    running_rr_number as i32,
                                     index_acc as i32,
                                     RunType::Acc as i32,
                                 ]);
@@ -327,25 +338,28 @@ impl RRRuns {
         // writing last run if needed
         if self.write_last_run {
             if index_acc > 0 {
+                println!("31");
                 self.accumulator.acc[index_acc] += 1;
                 self.update_runs_addresses(vec![
-                    running_rr_number as i32 + 1, // +1 i loops from running_rr_number + 1, so the loop ends at running_rr_number - 1
+                    running_rr_number as i32, // +1 i loops from running_rr_number + 1, so the loop ends at running_rr_number - 1
                     index_acc as i32,
                     RunType::Acc as i32,
                 ]);
             }
             if index_dec > 0 {
+                println!("32");
                 self.accumulator.dec[index_dec] += 1;
                 self.update_runs_addresses(vec![
-                    running_rr_number as i32 + 1,
+                    running_rr_number as i32,
                     index_dec as i32,
                     RunType::Dec as i32,
                 ]);
             }
             if index_neu > 0 {
+                println!("33");
                 self.accumulator.neu[index_neu] += 1;
                 self.update_runs_addresses(vec![
-                    running_rr_number as i32 + 1,
+                    running_rr_number as i32,
                     index_neu as i32,
                     RunType::Neu as i32,
                 ]);
@@ -441,18 +455,34 @@ impl RRRuns {
         }
     }
 
-    pub fn calculate_runs_variances(&mut self, addresses: &[(i32, i32, RunType)]) {
+    pub fn calculate_runs_variances(&mut self) {
         if !self.analyzed {
             self.analyze_runs();
         }
-        for &(rr_index, length, run_type) in addresses {
-            let run_var = self.runs_variances.entry(run_type).or_default();
-            let mut local_var = 0.0;
-            for i in rr_index..(rr_index + length) {
-                local_var +=
-                    (&self.rr_intervals[i as usize] - self.mean_rr).powi(2) / self.rr_length as f64;
+        for run in &self.accumulator.runs_addresses {
+            let rr_index = run[0];
+            let length = run[1];
+            let run_type = run[2];
+
+            let run_type_enum = match run_type {
+                t if t == RunType::Dec as i32 => RunType::Dec,
+                t if t == RunType::Acc as i32 => RunType::Acc,
+                _ => RunType::Neu,
+            };
+
+            let run_var = self
+                .runs_variances
+                .entry(run_type_enum)
+                .or_insert_with(|| vec![0.0; self.rr_length]);
+            let mut local_run_variance = 0.0;
+            for i in (rr_index - length)..rr_index {
+                local_run_variance += (&self.rr_intervals[i as usize] - self.mean_rr).powi(2)
+                    / (2.0 * (self.rr_length as f64).powi(2));
             }
-            run_var[length as usize] = local_var;
+            run_var[(length - 1) as usize] = local_run_variance;
         }
+    }
+    pub fn print_runs_variances(&self) {
+        println!("{:?}", self.runs_variances)
     }
 }
