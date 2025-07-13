@@ -24,6 +24,7 @@ pub struct RRRuns {
     annotations: Vec<i32>,
     write_last_run: bool,
     accumulator: RunsAccumulator,
+    runs_variances: HashMap<RunType, Vec<f64>>,
     analyzed: bool,
 }
 
@@ -37,6 +38,7 @@ impl RRRuns {
             neu: vec![0; size],
             runs_addresses: Vec::new(),
         };
+        let runs_variances: HashMap<RunType, Vec<f64>> = HashMap::new();
         let mut mean_rr = 0.0;
         for rr_i in &rr {
             mean_rr += rr_i;
@@ -47,6 +49,7 @@ impl RRRuns {
             mean_rr: mean_rr,
             rr_length: size,
             annotations: annot,
+            runs_variances: runs_variances,
             write_last_run,
             accumulator,
             analyzed: false,
@@ -438,13 +441,12 @@ impl RRRuns {
         }
     }
 
-    pub fn get_runs_variances(
-        &self,
-        addresses: &[(i32, i32, RunType)],
-    ) -> HashMap<RunType, Vec<f64>> {
-        let mut variances = HashMap::new();
+    pub fn calculate_runs_variances(&mut self, addresses: &[(i32, i32, RunType)]) {
+        if !self.analyzed {
+            self.analyze_runs();
+        }
         for &(rr_index, length, run_type) in addresses {
-            let run_var: &mut Vec<f64> = variances.entry(run_type).or_default();
+            let run_var = self.runs_variances.entry(run_type).or_default();
             let mut local_var = 0.0;
             for i in rr_index..(rr_index + length) {
                 local_var +=
@@ -452,7 +454,5 @@ impl RRRuns {
             }
             run_var[length as usize] = local_var;
         }
-
-        return variances;
     }
 }
