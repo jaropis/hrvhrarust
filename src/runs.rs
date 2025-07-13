@@ -19,6 +19,8 @@ pub struct RunsAccumulator {
 
 pub struct RRRuns {
     rr_intervals: Vec<f64>,
+    mean_rr: f64,
+    rr_length: usize,
     annotations: Vec<i32>,
     write_last_run: bool,
     accumulator: RunsAccumulator,
@@ -35,9 +37,15 @@ impl RRRuns {
             neu: vec![0; size],
             runs_addresses: Vec::new(),
         };
-
+        let mut mean_rr = 0.0;
+        for rr_i in &rr {
+            mean_rr += rr_i;
+        }
+        mean_rr = mean_rr / size as f64;
         RRRuns {
             rr_intervals: rr,
+            mean_rr: mean_rr,
+            rr_length: size,
             annotations: annot,
             write_last_run,
             accumulator,
@@ -439,7 +447,8 @@ impl RRRuns {
             let run_var: &mut Vec<f64> = variances.entry(run_type).or_default();
             let mut local_var = 0.0;
             for i in rr_index..(rr_index + length) {
-                local_var += &self.rr_intervals[i as usize].powi(2);
+                local_var +=
+                    (&self.rr_intervals[i as usize] - self.mean_rr).powi(2) / self.rr_length as f64;
             }
             run_var[length as usize] = local_var;
         }
