@@ -430,10 +430,18 @@ impl RRRuns {
         }
     }
 
-    pub fn get_runs_variances(addresses: &[(i32, i32, RunType)]) -> HashMap<RunType, Vec<f32>> {
+    pub fn get_runs_variances(
+        &self,
+        addresses: &[(i32, i32, RunType)],
+    ) -> HashMap<RunType, Vec<f64>> {
         let mut variances = HashMap::new();
         for &(rr_index, length, run_type) in addresses {
-            variances.insert(RunType::Dec, vec![3.3]);
+            let run_var: &mut Vec<f64> = variances.entry(run_type).or_default();
+            let mut local_var = 0.0;
+            for i in rr_index..(rr_index + length) {
+                local_var += &self.rr_intervals[i as usize].powi(2);
+            }
+            run_var[length as usize] = local_var;
         }
 
         return variances;
