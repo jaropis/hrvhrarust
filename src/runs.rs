@@ -469,17 +469,20 @@ impl RRRuns {
                 t if t == RunType::Acc as i32 => RunType::Acc,
                 _ => RunType::Neu,
             };
-
+            // this either accesses an existing vector containing variances of runs of specific lengths, or creates,
+            // i.e. it may return a reference to the vector of decelerations runs variances vector, each of the entries contains the variance of
+            // a specific length and direction: index 0 - cumulative variance of all deceleration runs of length 1,
+            // index 1: - cumulative variance of all deceleration runs of length 2 etc.
             let run_var = self
                 .runs_variances
                 .entry(run_type_enum)
-                .or_insert_with(|| vec![0.0; self.rr_length]);
-            let mut local_run_variance = 0.0;
+                .or_insert_with(|| vec![0.0; self.rr_length]); // this is too long - make it the longest run of the type
+            let mut local_run_variance = 0.0; // initial variance - it is 0, of course - it will be cumulatively calculated in the loop below
             for i in (rr_index - length)..rr_index {
                 local_run_variance += (&self.rr_intervals[i as usize] - self.mean_rr).powi(2)
                     / (2.0 * (self.rr_length as f64).powi(2));
             }
-            run_var[(length - 1) as usize] = local_run_variance;
+            run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
     }
     pub fn print_runs_variances(&self) {
