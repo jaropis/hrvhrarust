@@ -455,6 +455,11 @@ impl RRRuns {
         }
     }
 
+    pub fn print_runs_accumulator(&self) {
+        println!("dec: {:?}", self.accumulator.dec);
+        println!("acc: {:?}", self.accumulator.acc);
+        println!("neu: {:?}", self.accumulator.neu);
+    }
     pub fn calculate_runs_variances(&mut self) {
         if !self.analyzed {
             self.analyze_runs();
@@ -476,7 +481,7 @@ impl RRRuns {
             let run_var = self
                 .runs_variances
                 .entry(run_type_enum)
-                .or_insert_with(|| vec![0.0; self.rr_length]); // this is too long - make it the longest run of the type
+                .or_insert_with(|| vec![0.0; 30]); // this is too long - make it the longest run of the type
             let mut local_run_variance = 0.0; // initial variance - it is 0, of course - it will be cumulatively calculated in the loop below
             for i in (rr_index - length)..rr_index {
                 local_run_variance += (&self.rr_intervals[i as usize] - self.mean_rr).powi(2)
