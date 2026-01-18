@@ -26,6 +26,9 @@ pub struct RRRuns {
     accumulator: RunsAccumulator,
     runs_variances: HashMap<RunType, Vec<f64>>,
     analyzed: bool,
+    max_dec: usize,
+    max_acc: usize,
+    max_neu: usize,
 }
 
 impl RRRuns {
@@ -53,6 +56,9 @@ impl RRRuns {
             write_last_run,
             accumulator,
             analyzed: false,
+            max_acc: 0,
+            max_dec: 0,
+            max_neu: 0,
         }
     }
     pub fn get_runs_summary(&mut self) -> Vec<Vec<i32>> {
@@ -60,27 +66,27 @@ impl RRRuns {
             self.analyze_runs();
         }
         // getting length of non-zero elements
-        let dec_size = self.get_nonzero_length(&self.accumulator.dec);
-        let acc_size = self.get_nonzero_length(&self.accumulator.acc);
-        let neu_size = self.get_nonzero_length(&self.accumulator.neu);
+        self.max_dec = self.get_nonzero_length(&self.accumulator.dec);
+        self.max_acc = self.get_nonzero_length(&self.accumulator.acc);
+        self.max_neu = self.get_nonzero_length(&self.accumulator.neu);
 
         // calculating max length to determine number of rows needed
-        let max_length = cmp::max(cmp::max(acc_size, dec_size), neu_size);
+        let max_length = cmp::max(cmp::max(self.max_acc, self.max_dec), self.max_neu);
         // building summary rows
         let mut summary = Vec::new();
         for i in 1..=max_length {
             let row = vec![
-                if i <= acc_size {
+                if i <= self.max_acc {
                     *self.accumulator.acc.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
-                if i <= dec_size {
+                if i <= self.max_dec {
                     *self.accumulator.dec.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
-                if i <= neu_size {
+                if i <= self.max_neu {
                     *self.accumulator.neu.get(&i).unwrap_or(&0)
                 } else {
                     0
@@ -365,29 +371,30 @@ impl RRRuns {
         if !self.analyzed {
             self.analyze_runs();
         }
-
-        let dec_size = self.get_nonzero_length(&self.accumulator.dec);
-        let acc_size = self.get_nonzero_length(&self.accumulator.acc);
-        let neu_size = self.get_nonzero_length(&self.accumulator.neu);
+        if self.max_dec == 0 && self.max_acc == 0 && self.max_neu == 0 {
+            self.max_dec = self.get_nonzero_length(&self.accumulator.dec);
+            self.max_acc = self.get_nonzero_length(&self.accumulator.acc);
+            self.max_neu = self.get_nonzero_length(&self.accumulator.neu);
+        }
         //println!("ful neu accumulator size: {:?}", self.accumulator.neu);
-        let max_length = cmp::max(cmp::max(acc_size, dec_size), neu_size);
+        let max_length = cmp::max(cmp::max(self.max_acc, self.max_dec), self.max_neu);
 
         println!("i  Ar - DR - N");
         for i in 1..max_length {
             println!(
                 "{} {} - {} - {}",
                 i,
-                if i < acc_size {
+                if i < self.max_acc {
                     *self.accumulator.acc.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
-                if i < dec_size {
+                if i < self.max_dec {
                     *self.accumulator.dec.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
-                if i < neu_size {
+                if i < self.max_neu {
                     *self.accumulator.neu.get(&i).unwrap_or(&0)
                 } else {
                     0
@@ -455,6 +462,11 @@ impl RRRuns {
                 t if t == RunType::Acc as i32 => RunType::Acc,
                 _ => RunType::Neu,
             };
+            let max_len = match run_type_enum {
+                RunType::Dec => self.max_dec,
+                RunType::Acc => self.max_acc,
+                RunType::Neu => self.max_neu,
+            };
             // this either accesses an existing vector containing variances of runs of specific lengths, or creates,
             // i.e. it may return a reference to the vector of decelerations runs variances vector, each of the entries contains the variance of
             // a specific length and direction: index 0 - cumulative variance of all deceleration runs of length 1,
@@ -462,7 +474,7 @@ impl RRRuns {
             let run_var = self
                 .runs_variances
                 .entry(run_type_enum)
-                .or_insert_with(|| vec![0.0; 30]); // this is too long - make it the longest run of the type
+                .or_insert_with(|| vec![0.0; max_len]);
             let mut local_run_variance = 0.0; // initial variance - it is 0, of course - it will be cumulatively calculated in the loop below
             for i in (rr_index - length)..rr_index {
                 local_run_variance += (&self.rr_intervals[i as usize] - self.mean_rr).powi(2)
