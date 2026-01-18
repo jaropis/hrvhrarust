@@ -108,7 +108,6 @@ impl RRRuns {
     }
     // updating runs addresses
     fn update_runs_addresses(&mut self, new_entry: Vec<i32>) {
-        println!("entry: {:?}", new_entry);
         self.accumulator.runs_addresses.push(new_entry);
     }
 
@@ -132,7 +131,6 @@ impl RRRuns {
             }
             running_rr_number += 1;
         }
-        println!("running_rr_number: {}", running_rr_number);
         // initializing flags
         if self.rr_intervals[running_rr_number] < self.rr_intervals[running_rr_number + 1] {
             flag_dec = true;
@@ -150,7 +148,6 @@ impl RRRuns {
         while running_rr_number < (self.rr_intervals.len() - 1) {
             if self.annotations[running_rr_number + 1] != 0 {
                 if flag_dec {
-                    println!("11");
                     *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
@@ -159,7 +156,6 @@ impl RRRuns {
                     ]);
                 }
                 if flag_acc {
-                    println!("12");
                     *self.accumulator.acc.entry(index_acc).or_insert(0) += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
@@ -168,7 +164,6 @@ impl RRRuns {
                     ]);
                 }
                 if flag_neu {
-                    println!("13");
                     *self.accumulator.neu.entry(index_neu).or_insert(0) += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
@@ -250,7 +245,6 @@ impl RRRuns {
                         index_dec += 1;
                         if !flag_dec {
                             if flag_acc {
-                                println!("21");
                                 *self.accumulator.acc.entry(index_acc).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
@@ -260,7 +254,6 @@ impl RRRuns {
                                 index_acc = 0;
                                 flag_acc = false;
                             } else if flag_neu {
-                                println!("22");
                                 *self.accumulator.neu.entry(index_neu).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
@@ -277,8 +270,6 @@ impl RRRuns {
                         index_acc += 1;
                         if !flag_acc {
                             if flag_dec {
-                                println!("23");
-                                println!("running_rr_number: {}", running_rr_number);
                                 *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
@@ -288,7 +279,6 @@ impl RRRuns {
                                 index_dec = 0;
                                 flag_dec = false;
                             } else if flag_neu {
-                                println!("24");
                                 *self.accumulator.neu.entry(index_neu).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
@@ -305,7 +295,6 @@ impl RRRuns {
                         index_neu += 1;
                         if !flag_neu {
                             if flag_dec {
-                                println!("25");
                                 *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
@@ -315,7 +304,6 @@ impl RRRuns {
                                 index_dec = 0;
                                 flag_dec = false;
                             } else if flag_acc {
-                                println!("26");
                                 *self.accumulator.acc.entry(index_acc).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
@@ -335,7 +323,6 @@ impl RRRuns {
         // writing last run if needed
         if self.write_last_run {
             if index_acc > 0 {
-                println!("31");
                 *self.accumulator.acc.entry(index_acc).or_insert(0) += 1;
                 self.update_runs_addresses(vec![
                     running_rr_number as i32, // +1 i loops from running_rr_number + 1, so the loop ends at running_rr_number - 1
@@ -344,7 +331,6 @@ impl RRRuns {
                 ]);
             }
             if index_dec > 0 {
-                println!("32");
                 *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                 self.update_runs_addresses(vec![
                     running_rr_number as i32,
@@ -353,7 +339,6 @@ impl RRRuns {
                 ]);
             }
             if index_neu > 0 {
-                println!("33");
                 *self.accumulator.neu.entry(index_neu).or_insert(0) += 1;
                 self.update_runs_addresses(vec![
                     running_rr_number as i32,
