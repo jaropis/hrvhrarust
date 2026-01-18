@@ -97,7 +97,15 @@ impl RRRuns {
 
         summary
     }
-
+    pub fn get_nonzero_length(&self, map: &HashMap<usize, i32>) -> usize {
+        let mut max: &usize = &0;
+        for k in map.keys() {
+            if max < k {
+                max = k;
+            }
+        }
+        *max
+    }
     // updating runs addresses
     fn update_runs_addresses(&mut self, new_entry: Vec<i32>) {
         println!("entry: {:?}", new_entry);
@@ -243,7 +251,7 @@ impl RRRuns {
                         if !flag_dec {
                             if flag_acc {
                                 println!("21");
-                                self.accumulator.acc[index_acc] += 1;
+                                *self.accumulator.dec.entry(index_acc).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
                                     index_acc as i32,
@@ -253,7 +261,7 @@ impl RRRuns {
                                 flag_acc = false;
                             } else if flag_neu {
                                 println!("22");
-                                self.accumulator.neu[index_neu] += 1;
+                                *self.accumulator.dec.entry(index_neu).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
                                     index_neu as i32,
@@ -271,7 +279,7 @@ impl RRRuns {
                             if flag_dec {
                                 println!("23");
                                 println!("running_rr_number: {}", running_rr_number);
-                                self.accumulator.dec[index_dec] += 1;
+                                *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
                                     index_dec as i32,
@@ -281,7 +289,7 @@ impl RRRuns {
                                 flag_dec = false;
                             } else if flag_neu {
                                 println!("24");
-                                self.accumulator.neu[index_neu] += 1;
+                                *self.accumulator.dec.entry(index_neu).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
                                     index_neu as i32,
@@ -298,7 +306,7 @@ impl RRRuns {
                         if !flag_neu {
                             if flag_dec {
                                 println!("25");
-                                self.accumulator.dec[index_dec] += 1;
+                                *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
                                     index_dec as i32,
@@ -308,7 +316,7 @@ impl RRRuns {
                                 flag_dec = false;
                             } else if flag_acc {
                                 println!("26");
-                                self.accumulator.acc[index_acc] += 1;
+                                *self.accumulator.dec.entry(index_acc).or_insert(0) += 1;
                                 self.update_runs_addresses(vec![
                                     running_rr_number as i32,
                                     index_acc as i32,
@@ -328,7 +336,7 @@ impl RRRuns {
         if self.write_last_run {
             if index_acc > 0 {
                 println!("31");
-                self.accumulator.acc[index_acc] += 1;
+                *self.accumulator.dec.entry(index_acc).or_insert(0) += 1;
                 self.update_runs_addresses(vec![
                     running_rr_number as i32, // +1 i loops from running_rr_number + 1, so the loop ends at running_rr_number - 1
                     index_acc as i32,
@@ -337,7 +345,7 @@ impl RRRuns {
             }
             if index_dec > 0 {
                 println!("32");
-                self.accumulator.dec[index_dec] += 1;
+                *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                 self.update_runs_addresses(vec![
                     running_rr_number as i32,
                     index_dec as i32,
@@ -346,7 +354,7 @@ impl RRRuns {
             }
             if index_neu > 0 {
                 println!("33");
-                self.accumulator.neu[index_neu] += 1;
+                *self.accumulator.dec.entry(index_neu).or_insert(0) += 1;
                 self.update_runs_addresses(vec![
                     running_rr_number as i32,
                     index_neu as i32,
@@ -386,17 +394,17 @@ impl RRRuns {
                 "{} {} - {} - {}",
                 i,
                 if i < acc_size {
-                    self.accumulator.acc[i]
+                    *self.accumulator.acc.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
                 if i < dec_size {
-                    self.accumulator.dec[i]
+                    *self.accumulator.dec.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
                 if i < neu_size {
-                    self.accumulator.neu[i]
+                    *self.accumulator.neu.get(&i).unwrap_or(&0)
                 } else {
                     0
                 }
