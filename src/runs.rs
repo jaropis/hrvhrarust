@@ -11,9 +11,9 @@ pub enum RunType {
 // storing run statistics and addresses
 #[derive(Debug, Clone)]
 pub struct RunsAccumulator {
-    dec: Vec<i32>,                 // storing statistics for deceleration runs
-    acc: Vec<i32>,                 // storing statistics for acceleration runs
-    neu: Vec<i32>,                 // storing statistics for neutral runs
+    dec: HashMap<usize, i32>,      // storing statistics for deceleration runs
+    acc: HashMap<usize, i32>,      // storing statistics for acceleration runs
+    neu: HashMap<usize, i32>,      // storing statistics for neutral runs
     runs_addresses: Vec<Vec<i32>>, // storing addresses of runs: [end address, length, type]
 }
 
@@ -33,9 +33,9 @@ impl RRRuns {
     pub fn new(rr: Vec<f64>, annot: Vec<i32>, write_last_run: bool) -> Self {
         let size = rr.len();
         let accumulator = RunsAccumulator {
-            dec: vec![0; size],
-            acc: vec![0; size],
-            neu: vec![0; size],
+            dec: HashMap::new(),
+            acc: HashMap::new(),
+            neu: HashMap::new(),
             runs_addresses: Vec::new(),
         };
         let runs_variances: HashMap<RunType, Vec<f64>> = HashMap::new();
@@ -72,17 +72,17 @@ impl RRRuns {
         for i in 1..max_length {
             let row = vec![
                 if i < acc_size {
-                    self.accumulator.acc[i]
+                    *self.accumulator.acc.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
                 if i < dec_size {
-                    self.accumulator.dec[i]
+                    *self.accumulator.dec.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
                 if i < neu_size {
-                    self.accumulator.neu[i]
+                    *self.accumulator.neu.get(&i).unwrap_or(&0)
                 } else {
                     0
                 },
@@ -96,17 +96,6 @@ impl RRRuns {
         }
 
         summary
-    }
-
-    // getting nonzero length of a vector
-    fn get_nonzero_length(&self, vec: &[i32]) -> usize {
-        let counter = vec.len();
-        for i in (0..counter).rev() {
-            if vec[i] != 0 {
-                return i + 1;
-            }
-        }
-        0
     }
 
     // updating runs addresses
@@ -154,7 +143,7 @@ impl RRRuns {
             if self.annotations[running_rr_number + 1] != 0 {
                 if flag_dec {
                     println!("11");
-                    self.accumulator.dec[index_dec] += 1;
+                    *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
                         index_dec as i32,
@@ -163,7 +152,7 @@ impl RRRuns {
                 }
                 if flag_acc {
                     println!("12");
-                    self.accumulator.acc[index_acc] += 1;
+                    *self.accumulator.acc.entry(index_acc).or_insert(0) += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
                         index_acc as i32,
@@ -172,7 +161,7 @@ impl RRRuns {
                 }
                 if flag_neu {
                     println!("13");
-                    self.accumulator.neu[index_neu] += 1;
+                    *self.accumulator.neu.entry(index_neu).or_insert(0) += 1;
                     self.update_runs_addresses(vec![
                         running_rr_number as i32,
                         index_neu as i32,
