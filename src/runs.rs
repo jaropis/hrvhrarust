@@ -66,14 +66,9 @@ impl RRRuns {
 
         // calculating max length to determine number of rows needed
         let max_length = cmp::max(cmp::max(acc_size, dec_size), neu_size);
-        println!(
-            "dec: {}, acc: {}, neu: {}, max is: {}",
-            dec_size, acc_size, neu_size, max_length
-        );
         // building summary rows
         let mut summary = Vec::new();
         for i in 1..=max_length {
-            println!("i: {}", i);
             let row = vec![
                 if i <= acc_size {
                     *self.accumulator.acc.get(&i).unwrap_or(&0)
