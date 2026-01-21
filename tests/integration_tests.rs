@@ -53,7 +53,6 @@ fn test_case_5() -> io::Result<()> {
     let rr_series = RRSeries::read_rr("tests/data/test5.csv")?;
     let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
     rr.get_full_runs();
-
     assert_eq!(rr.get_runs_summary(), vec![vec![0, 1, 1]]);
     Ok(())
 }

@@ -126,6 +126,7 @@ impl RRRuns {
                 || self.annotations[running_rr_number + 1] != 0)
         {
             if running_rr_number == self.rr_intervals.len() - 1 {
+                self.set_max();
                 self.analyzed = true; // have to mark that this has been analyzed`
                 return; // returning early if we have jumped over all the recording and found no viable runs - this is an edge case
             }
@@ -183,6 +184,7 @@ impl RRRuns {
                 {
                     running_rr_number += 1;
                     if running_rr_number >= self.rr_intervals.len() - 1 {
+                        self.set_max();
                         self.analyzed = true; // have to mark that this has been analyzed
                         return;
                     }
@@ -375,7 +377,6 @@ impl RRRuns {
         }
         //println!("ful neu accumulator size: {:?}", self.accumulator.neu);
         let max_length = cmp::max(cmp::max(self.max_acc, self.max_dec), self.max_neu);
-
         println!("i  Ar - DR - N");
         for i in 1..max_length {
             println!(
