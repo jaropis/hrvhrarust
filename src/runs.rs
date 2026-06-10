@@ -21,7 +21,7 @@ pub struct RRRuns {
     rr_intervals: Vec<f64>,
     mean_rr: f64,
     rr_length: usize,
-    annotations: Vec<i32>,
+    annotations: Vec<u8>,
     write_last_run: bool,
     accumulator: RunsAccumulator,
     runs_variances: HashMap<RunType, Vec<f64>>,
