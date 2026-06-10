@@ -3,7 +3,7 @@ use std::io::{self, BufRead, BufReader};
 
 pub struct RRSeries {
     pub rr: Vec<f64>,
-    pub annot: Vec<i32>,
+    pub annot: Vec<u8>,
     pub column_names: Vec<String>,
     pub size: usize,
 }
@@ -29,7 +29,7 @@ impl RRSeries {
             let values: Vec<&str> = line.split_whitespace().collect();
             if values.len() >= 2 {
                 rr.push(values[0].parse::<f64>().unwrap());
-                annot.push(values[1].parse::<i32>().unwrap());
+                annot.push(values[1].parse::<u8>().unwrap());
             }
         }
 

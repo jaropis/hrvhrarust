@@ -3,8 +3,8 @@ use std::cmp;
 #[derive(Debug, Clone, Copy)]
 
 pub struct RRSeries {
-    rr_intervals: Vec(f64),
-    annotations: Vec(u8),
+    rr_intervals: Vec<f64>,
+    annotations: Vec<u8>,
     length: usize,
     quality_stats: QualityStats,
     time_length: f64,
@@ -34,9 +34,10 @@ pub struct PoincarePlot {
 }
 
 impl RRSeries {
+    pub fn new()
     fn get_quality_stats(self) -> QualityStats {
         let quality_stats: QualityStats;
-        for i in 0..=self.length - 1 {
+        for i in 0..self.length - 1 {
             match self.annot(i) {
                 0 => quality_stats.n = quality_stats.n + 1,
                 1 => quality_stats.v = quality_stats.v + 1,
@@ -50,7 +51,7 @@ impl RRSeries {
         let idx: usize;
         let xi: Vec<f64>;
         let xii: Vec<f64>;
-        for idx in 0..=self.length {
+        for idx in 0..self.length {
             println!("dupa");
         }
     }

@@ -33,7 +33,7 @@ pub struct RRRuns {
 
 impl RRRuns {
     // creating new instance of RRRuns
-    pub fn new(rr: Vec<f64>, annot: Vec<i32>, write_last_run: bool) -> Self {
+    pub fn new(rr: Vec<f64>, annot: Vec<u8>, write_last_run: bool) -> Self {
         let size = rr.len();
         let accumulator = RunsAccumulator {
             dec: HashMap::new(),
