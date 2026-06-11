@@ -1,7 +1,4 @@
-use std::cmp;
-
-#[derive(Debug, Clone, Copy)]
-
+#[derive(Debug, Clone)]
 pub struct RRSeries {
     rr_intervals: Vec<f64>,
     annotations: Vec<u8>,
@@ -9,32 +6,54 @@ pub struct RRSeries {
     quality_stats: QualityStats,
     time_length: f64,
     mean_rr: f64,
-    SDNN: f64,
-    SD1: f64,
-    SD2: f64,
+    sdnn: f64,
+    sd1: f64,
+    sd2: f64,
     pp: PoincarePlot,
-    SD1a: f64,
-    SD1d: f64,
-    SD2a: f64,
-    SD2d: f64,
-    SDNNa: f64,
-    SDNNd: f64,
+    sd1a: f64,
+    sd1d: f64,
+    sd2a: f64,
+    sd2d: f64,
+    sdnn_a: f64,
+    sdnn_d: f64,
 }
-
+#[derive(Debug, Clone, Default)] // the Default trait makes sure the starting values are all 0
 pub struct QualityStats {
-    n: usize = 0, // normal
-    v: usize = 0, // ventricular
-    s: usize = 0, // supraventricular
-    x: usize = 0, // artifact
+    n: usize, // normal
+    v: usize, // ventricular
+    s: usize, // supraventricular
+    x: usize, // artifact
 }
 
+#[derive(Debug, Clone)]
 pub struct PoincarePlot {
     xi: Vec<f64>,
     xii: Vec<f64>,
 }
 
 impl RRSeries {
-    pub fn new()
+    pub fn new(rr_intervals: Vec<f64>, annotations: Vec<u8>) -> Self {
+        let length = rr_intervals.len();
+        let quality_stats = get_quality_stats();
+        return RRSeries {
+            rr_intervals: rr_intervals,
+            annotations: annotations,
+            length: length,
+            quality_stats: QualityStats,
+            time_length: f64,
+            mean_rr: f64,
+            sdnn: f64,
+            sd1: f64,
+            sd2: f64,
+            pp: PoincarePlot,
+            sd1a: f64,
+            sd1d: f64,
+            sd2a: f64,
+            sd2d: f64,
+            sdnn_a: f64,
+            sdnn_d: f64,
+        };
+    }
     fn get_quality_stats(self) -> QualityStats {
         let quality_stats: QualityStats;
         for i in 0..self.length - 1 {
