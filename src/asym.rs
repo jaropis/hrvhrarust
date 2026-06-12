@@ -1,7 +1,7 @@
 #[derive(Debug, Clone)]
 pub struct RRSeries {
     rr_intervals: Vec<f64>,
-    annotations: Vec<u8>,
+    annotations: Vec<Annotations>,
     length: usize,
     quality_stats: QualityStats,
     time_length: f64,
@@ -16,6 +16,13 @@ pub struct RRSeries {
     sd2d: f64,
     sdnn_a: f64,
     sdnn_d: f64,
+}
+#[derive(Debug, Clone, PartialEq)]
+pub enum Annotations {
+    N = 0,
+    V = 1,
+    S = 2,
+    X = 3,
 }
 #[derive(Debug, Clone, Default)] // the Default trait makes sure the starting values are all 0
 pub struct QualityStats {
@@ -32,7 +39,7 @@ pub struct PoincarePlot {
 }
 
 impl RRSeries {
-    pub fn new(&mut self, rr_intervals: Vec<f64>, annotations: Vec<u8>) -> Self {
+    pub fn new(&mut self, rr_intervals: Vec<f64>, annotations: Vec<Annotations>) -> Self {
         let length = rr_intervals.len();
         let quality_stats = self.get_quality_stats();
         let pp = self.form_pp();
@@ -56,23 +63,29 @@ impl RRSeries {
         };
     }
     fn get_quality_stats(&self) -> QualityStats {
-        let mut quality_stats: QualityStats;
+        let mut quality_stats = QualityStats {
+            n: 0,
+            v: 0,
+            s: 0,
+            x: 0,
+        };
         for i in 0..self.length - 1 {
             match self.annotations[i] {
-                0 => quality_stats.n = quality_stats.n + 1,
-                1 => quality_stats.v = quality_stats.v + 1,
-                2 => quality_stats.s = quality_stats.s + 1,
-                3 => quality_stats.x = quality_stats.x + 1,
+                Annotations::N => quality_stats.n = quality_stats.n + 1,
+                Annotations::S => quality_stats.v = quality_stats.v + 1,
+                Annotations::V => quality_stats.s = quality_stats.s + 1,
+                Annotations::X => quality_stats.x = quality_stats.x + 1,
             }
         }
         quality_stats
     }
     fn form_pp(&mut self) -> PoincarePlot {
-        let idx: usize;
-        let mut xi: Vec<f64>;
-        let mut xii: Vec<f64>;
+        let mut xi: Vec<f64> = vec![];
+        let mut xii: Vec<f64> = vec![];
         for idx in 0..self.length {
-            if (self.annotations[idx] == 0) & (self.annotations[idx + 1] == 0) {
+            if (self.annotations[idx] == Annotations::N)
+                & (self.annotations[idx + 1] == Annotations::N)
+            {
                 xi.push(self.rr_intervals[idx]);
                 xii.push(self.rr_intervals[idx + 1])
             }
@@ -102,10 +115,9 @@ impl RRSeries {
     /// * `sample` - Whether sample sd or sd as an estimator should be estimated
     /// * `full` - Whether the sd for the full recording should be calculated, or only for xi?
     fn sd(&self, sample: bool, full: bool) -> f64 {
-        let mean_rr = self.mean_rr_full();
         let mut var_accu = 0.0;
         let mut comp = 0.0;
-        for rr in self.rr_intervals {
+        for rr in &self.rr_intervals {
             (comp, var_accu) = self.sum_of_squares(rr, var_accu, comp);
         }
         let n = if full {
@@ -116,7 +128,7 @@ impl RRSeries {
         let divisor = if sample { n } else { n - 1 };
         return (var_accu / divisor as f64).sqrt();
     }
-    fn sum_of_squares(&self, rr: f64, comp: f64, var_accu: f64) -> (f64, f64) {
+    fn sum_of_squares(&self, rr: &f64, comp: f64, var_accu: f64) -> (f64, f64) {
         let diff = rr - self.mean_rr;
         let term = diff * diff;
         let y = term - comp;
