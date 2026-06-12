@@ -68,10 +68,35 @@ impl RRSeries {
     }
     fn form_pp(self) -> PoincarePlot {
         let idx: usize;
-        let xi: Vec<f64>;
-        let xii: Vec<f64>;
+        let mut xi: Vec<f64>;
+        let mut xii: Vec<f64>;
         for idx in 0..self.length {
-            println!("dupa");
+            if (self.annotations[idx] == 0 & (self.annotations[idx + 1] == 0)) {
+                xi.push(self.rr_intervals[idx]);
+                xii.push(self.rr_intervals[idx + 1])
+            }
         }
+        return PoincarePlot { xi: xi, xii: xii };
+    }
+    fn mean_rr_full(self) -> f64 {
+        // this is a regular mean from all RR's that are of sinusl origin
+        let mut accumulator = 0.0;
+        for i in 0..self.xi.len() as usize {
+            accumulator = accumulator + self.xi[i];
+        }
+        accumulator = accumulator + self.xii[xi.len() - 1];
+        return accumulator / (self.xi.len() + 1 as f64);
+    }
+    fn mean_rr_pp(self) -> f64 {
+        // this is calculated from xi only
+        let mut accumulator = 0.0;
+        for i in 0..self.xi.len() as usize {
+            accumulator = accumulator + self.xi[i];
+        }
+        return accumulator / (self.xi.len() as f64);
+    }
+
+    fn sdnn_full(self) -> f64 {
+        return 0.01;
     }
 }
