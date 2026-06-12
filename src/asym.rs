@@ -95,8 +95,30 @@ impl RRSeries {
         }
         return accumulator / (self.xi.len() as f64);
     }
-
-    fn sdnn_full(self) -> f64 {
-        return 0.01;
+    /// Returns the standard deviation
+    /// #Arguments
+    /// * `sample` - Whether sample sd or sd as an estimator should be estimated
+    /// * `full` - Whether the sd for the full recording should be calculated, or only for xi?
+    fn sd(self, sample: bool, full: bool) -> f64 {
+        let mean_rr = self.mean_rr_full();
+        let mut var_accu = 0.0;
+        let mut comp = 0.0;
+        for rr in self.rr_intervals {
+            (comp, var_accu) = self.sum_of_squares(rr, mean_rr, var_accu, comp);
+        }
+        let n = if full {
+            self.xi.len() + 1
+        } else {
+            self.xi.len()
+        };
+        let divisor = if sample { n } else { n - 1 };
+        return (var_accu / divisor).sqrt();
+    }
+    fn sum_of_squares(rr: f64, mean_rr: f64, comp: f64, var_accu: f64) -> (f64, f64) {
+        let diff = rr - mean_rr;
+        let term = diff * diff;
+        let y = term - comp;
+        let t = var_accu + y;
+        return ((t - var_accu) - y, t); // this returns the new values of comp and var_accu, in order
     }
 }
