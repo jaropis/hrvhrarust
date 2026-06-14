@@ -75,7 +75,7 @@ impl AsymVarDesc {
             s: 0,
             x: 0,
         };
-        for i in 0..self.length - 1 {
+        for i in 0..self.length {
             match self.annotations[i] {
                 Annotations::N => quality_stats.n = quality_stats.n + 1,
                 Annotations::S => quality_stats.v = quality_stats.v + 1,
@@ -88,7 +88,7 @@ impl AsymVarDesc {
     fn form_pp(&mut self) -> PoincarePlot {
         let mut xi: Vec<f64> = vec![];
         let mut xii: Vec<f64> = vec![];
-        for idx in 0..self.length {
+        for idx in 0..self.length - 1 {
             if (self.annotations[idx] == Annotations::N)
                 & (self.annotations[idx + 1] == Annotations::N)
             {
