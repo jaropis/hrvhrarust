@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-pub struct RRSeries {
+pub struct AsymVarDesc {
     rr_intervals: Vec<f64>,
     annotations: Vec<Annotations>,
     length: usize,
@@ -38,19 +38,21 @@ pub struct PoincarePlot {
     xii: Vec<f64>,
 }
 
-impl RRSeries {
+impl AsymVarDesc {
     pub fn new(&mut self, rr_intervals: Vec<f64>, annotations: Vec<Annotations>) -> Self {
         let length = rr_intervals.len();
         let quality_stats = self.get_quality_stats();
         let pp = self.form_pp();
-        return RRSeries {
+        let mean_rr = self.mean_rr_full();
+        let sdnn = self.sd(true, true);
+        return AsymVarDesc {
             rr_intervals: rr_intervals,
             annotations: annotations,
             length: length,
             quality_stats: quality_stats,
             time_length: 1.0,
-            mean_rr: 1.0,
-            sdnn: 1.0,
+            mean_rr: mean_rr,
+            sdnn: sdnn,
             sd1: 1.0,
             sd2: 1.0,
             pp: pp,
@@ -92,7 +94,7 @@ impl RRSeries {
         }
         return PoincarePlot { xi: xi, xii: xii };
     }
-    fn mean_rr_full(self) -> f64 {
+    fn mean_rr_full(&self) -> f64 {
         // this is a regular mean from all RR's that are of sinus origin
         let mut accumulator = 0.0;
         let length = self.pp.xi.len() - 1;
@@ -102,7 +104,7 @@ impl RRSeries {
         accumulator = accumulator + self.pp.xii[length];
         return accumulator / (self.pp.xi.len() + 1) as f64;
     }
-    fn mean_rr_pp(self) -> f64 {
+    fn mean_rr_pp(&self) -> f64 {
         // this is calculated from xi only
         let mut accumulator = 0.0;
         for i in 0..self.pp.xi.len() as usize {
