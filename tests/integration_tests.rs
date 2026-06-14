@@ -1,8 +1,9 @@
 use std::io;
 // Import the needed types from your library
+use hrvhra_rust::asym::AsymVarDesc;
+use hrvhra_rust::common::Annotations;
 use hrvhra_rust::data_reader::RRSeries;
 use hrvhra_rust::runs::RRRuns;
-
 // runs integration tests
 #[test]
 fn test_case_1() -> io::Result<()> {
@@ -128,5 +129,25 @@ fn test_entropy_known_values() -> io::Result<()> {
     let r = 0.5;
     let sampen = hrvhra_rust::samp_en::calc_samp_en(&signal, 2, r);
     assert!(!sampen.is_finite());
+    Ok(())
+}
+
+#[test]
+fn test_asym_mean() -> io::Result<()> {
+    let rr_data = vec![0., 1., 1., 0., 0., 1., 2., 1., 0.];
+    let annot_data = Annotations::to_vec_of_annot(vec![0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_data, annot_data);
+    asym_var.analyze_asym_var();
+    assert_eq!((asym_var.mean_rr * 1000.0).round() / 1000.0, 0.667);
+    Ok(())
+}
+
+#[test]
+fn test_asym_sd() -> io::Result<()> {
+    let rr_data = vec![0., 1., 1., 0., 0., 1., 2., 1., 0.];
+    let annot_data = Annotations::to_vec_of_annot(vec![0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_data, annot_data);
+    asym_var.analyze_asym_var();
+    assert_eq!((asym_var.sdnn * 1000.0).round() / 1000.0, 0.707);
     Ok(())
 }
