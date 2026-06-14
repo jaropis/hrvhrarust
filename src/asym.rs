@@ -16,6 +16,7 @@ pub struct AsymVarDesc {
     sd2d: f64,
     sdnn_a: f64,
     sdnn_d: f64,
+    analyzed: bool,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub enum Annotations {
@@ -39,31 +40,39 @@ pub struct PoincarePlot {
 }
 
 impl AsymVarDesc {
-    pub fn new(&mut self, rr_intervals: Vec<f64>, annotations: Vec<Annotations>) -> Self {
+    pub fn new(rr_intervals: Vec<f64>, annotations: Vec<Annotations>) -> Self {
         let length = rr_intervals.len();
-        let quality_stats = self.get_quality_stats();
-        let pp = self.form_pp();
-        let mean_rr = self.mean_rr_full();
-        let sdnn = self.sd(true, true);
+
         return AsymVarDesc {
             rr_intervals: rr_intervals,
             annotations: annotations,
             length: length,
-            quality_stats: quality_stats,
+            quality_stats: QualityStats::default(),
             time_length: 1.0,
-            mean_rr: mean_rr,
-            sdnn: sdnn,
+            mean_rr: 0.0,
+            sdnn: 0.0,
             sd1: 1.0,
             sd2: 1.0,
-            pp: pp,
+            pp: PoincarePlot {
+                xi: vec![],
+                xii: vec![],
+            },
             sd1a: 1.0,
             sd1d: 1.0,
             sd2a: 1.0,
             sd2d: 1.0,
             sdnn_a: 1.0,
             sdnn_d: 1.0,
+            analyzed: false,
         };
     }
+    pub fn analyze_asym_var(&mut self) {
+        self.quality_stats = self.get_quality_stats();
+        self.pp = self.form_pp();
+        self.mean_rr = self.mean_rr_full();
+        self.sdnn = self.sd(true, true);
+    }
+
     fn get_quality_stats(&self) -> QualityStats {
         let mut quality_stats = QualityStats {
             n: 0,
