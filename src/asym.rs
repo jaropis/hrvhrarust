@@ -1,3 +1,4 @@
+use crate::common::Annotations;
 #[derive(Debug, Clone)]
 pub struct AsymVarDesc {
     rr_intervals: Vec<f64>,
@@ -18,13 +19,7 @@ pub struct AsymVarDesc {
     sdnn_d: f64,
     analyzed: bool,
 }
-#[derive(Debug, Clone, PartialEq)]
-pub enum Annotations {
-    N = 0,
-    V = 1,
-    S = 2,
-    X = 3,
-}
+
 #[derive(Debug, Clone, Default)] // the Default trait makes sure the starting values are all 0
 pub struct QualityStats {
     n: usize, // normal
