@@ -124,19 +124,34 @@ impl AsymVarDesc {
     fn sd(&self, sample: bool, full: bool) -> f64 {
         let mut var_accu = 0.0;
         let mut comp = 0.0;
-        for rr in &self.rr_intervals {
-            (comp, var_accu) = self.sum_of_squares(rr, var_accu, comp);
-        }
-        let n = if full {
-            self.pp.xi.len() + 1
+        let (mean, n) = if full {
+            (self.mean_rr, self.pp.xi.len() + 1)
         } else {
-            self.pp.xi.len()
+            (self.mean_rr_pp(), self.pp.xi.len())
         };
-        let divisor = if sample { n } else { n - 1 };
+
+        if n == 0 || (sample && n < 2) {
+            return 0.0;
+        }
+
+        if full {
+            for rr in &self.pp.xi {
+                (comp, var_accu) = self.sum_of_squares(*rr, mean, comp, var_accu);
+            }
+            if let Some(last) = self.pp.xii.last() {
+                (_, var_accu) = self.sum_of_squares(*last, mean, comp, var_accu);
+            }
+        } else {
+            for rr in &self.pp.xi {
+                (comp, var_accu) = self.sum_of_squares(*rr, mean, comp, var_accu);
+            }
+        }
+
+        let divisor = if sample { n - 1 } else { n };
         return (var_accu / divisor as f64).sqrt();
     }
-    fn sum_of_squares(&self, rr: &f64, comp: f64, var_accu: f64) -> (f64, f64) {
-        let diff = rr - self.mean_rr;
+    fn sum_of_squares(&self, rr: f64, mean: f64, comp: f64, var_accu: f64) -> (f64, f64) {
+        let diff = rr - mean;
         let term = diff * diff;
         let y = term - comp;
         let t = var_accu + y;
