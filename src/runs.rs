@@ -121,16 +121,25 @@ impl RRRuns {
         let mut index_neu = 0;
         let mut running_rr_number = 0;
         // rewinding to first good flag
-        while running_rr_number < self.rr_intervals.len()
+        // the `running_rr_number + 1 < len` bound is checked first so the
+        // `annotations[running_rr_number + 1]` access below can never go out of bounds
+        // (the previous `running_rr_number < len` bound allowed reading annotations[len]
+        // when the last beat was normal but all preceding beats were bad)
+        while running_rr_number + 1 < self.rr_intervals.len()
             && (self.annotations[running_rr_number] != 0
                 || self.annotations[running_rr_number + 1] != 0)
         {
-            if running_rr_number == self.rr_intervals.len() - 1 {
-                self.set_max();
-                self.analyzed = true; // have to mark that this has been analyzed`
-                return; // returning early if we have jumped over all the recording and found no viable runs - this is an edge case
-            }
             running_rr_number += 1;
+        }
+        // if we scanned the whole recording without finding a viable pair of normal
+        // beats (e.g. all-bad input), there are no runs to analyze - return early
+        if running_rr_number + 1 >= self.rr_intervals.len()
+            || self.annotations[running_rr_number] != 0
+            || self.annotations[running_rr_number + 1] != 0
+        {
+            self.set_max();
+            self.analyzed = true; // have to mark that this has been analyzed
+            return; // returning early if we have jumped over all the recording and found no viable runs - this is an edge case
         }
         // initializing flags
         if self.rr_intervals[running_rr_number] < self.rr_intervals[running_rr_number + 1] {

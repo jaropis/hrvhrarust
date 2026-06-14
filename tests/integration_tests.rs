@@ -77,6 +77,29 @@ fn test_case_7() -> io::Result<()> {
     Ok(())
 }
 
+// last beat normal, all preceding beats bad - the OOB regression case; must not
+// panic and must report no runs
+#[test]
+fn test_case_trailing_normal() -> io::Result<()> {
+    let rr_series = RRSeries::read_rr("tests/data/test8.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+    rr.get_full_runs();
+
+    assert_eq!(rr.get_runs_summary(), vec![vec![0, 0, 0]]);
+    Ok(())
+}
+
+// every beat annotated as bad (non-sinus) - must not panic and must report no runs
+#[test]
+fn test_case_all_bad() -> io::Result<()> {
+    let rr_series = RRSeries::read_rr("tests/data/test9.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+    rr.get_full_runs();
+
+    assert_eq!(rr.get_runs_summary(), vec![vec![0, 0, 0]]);
+    Ok(())
+}
+
 // sample entropy integration tests
 #[test]
 fn test_entropy_case_1() -> io::Result<()> {
