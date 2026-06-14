@@ -66,6 +66,7 @@ impl AsymVarDesc {
         self.pp = self.form_pp();
         self.mean_rr = self.mean_rr_full();
         self.sdnn = self.sd(true, true);
+        self.analyzed = true;
     }
 
     fn get_quality_stats(&self) -> QualityStats {
