@@ -16,4 +16,10 @@ impl Annotations {
             _ => panic!("Unsupported annotation code: {}", code),
         }
     }
+    pub fn to_vec_of_annot(annot_vector: Vec<u8>) -> Vec<Annotations> {
+        annot_vector
+            .into_iter()
+            .map(Annotations::annotation_from_code)
+            .collect()
+    }
 }
