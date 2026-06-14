@@ -123,8 +123,6 @@ impl RRRuns {
         // rewinding to first good flag
         // the `running_rr_number + 1 < len` bound is checked first so the
         // `annotations[running_rr_number + 1]` access below can never go out of bounds
-        // (the previous `running_rr_number < len` bound allowed reading annotations[len]
-        // when the last beat was normal but all preceding beats were bad)
         while running_rr_number + 1 < self.rr_intervals.len()
             && (self.annotations[running_rr_number] != 0
                 || self.annotations[running_rr_number + 1] != 0)
