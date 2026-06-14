@@ -1,5 +1,7 @@
+use crate::common::Annotations;
 use std::cmp;
 use std::collections::HashMap;
+
 // defining run types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RunType {
@@ -21,7 +23,7 @@ pub struct RRRuns {
     rr_intervals: Vec<f64>,
     mean_rr: f64,
     rr_length: usize,
-    annotations: Vec<u8>,
+    annotations: Vec<Annotations>,
     write_last_run: bool,
     accumulator: RunsAccumulator,
     runs_variances: HashMap<RunType, Vec<f64>>,
@@ -33,7 +35,7 @@ pub struct RRRuns {
 
 impl RRRuns {
     // creating new instance of RRRuns
-    pub fn new(rr: Vec<f64>, annot: Vec<u8>, write_last_run: bool) -> Self {
+    pub fn new(rr: Vec<f64>, annot: Vec<Annotations>, write_last_run: bool) -> Self {
         let size = rr.len();
         let accumulator = RunsAccumulator {
             dec: HashMap::new(),
@@ -124,16 +126,16 @@ impl RRRuns {
         // the `running_rr_number + 1 < len` bound is checked first so the
         // `annotations[running_rr_number + 1]` access below can never go out of bounds
         while running_rr_number + 1 < self.rr_intervals.len()
-            && (self.annotations[running_rr_number] != 0
-                || self.annotations[running_rr_number + 1] != 0)
+            && (self.annotations[running_rr_number] != Annotations::N
+                || self.annotations[running_rr_number + 1] != Annotations::N)
         {
             running_rr_number += 1;
         }
         // if we scanned the whole recording without finding a viable pair of normal
         // beats (e.g. all-bad input), there are no runs to analyze - return early
         if running_rr_number + 1 >= self.rr_intervals.len()
-            || self.annotations[running_rr_number] != 0
-            || self.annotations[running_rr_number + 1] != 0
+            || self.annotations[running_rr_number] != Annotations::N
+            || self.annotations[running_rr_number + 1] != Annotations::N
         {
             self.set_max();
             self.analyzed = true; // have to mark that this has been analyzed
@@ -154,7 +156,7 @@ impl RRRuns {
         }
         running_rr_number += 1;
         while running_rr_number < (self.rr_intervals.len() - 1) {
-            if self.annotations[running_rr_number + 1] != 0 {
+            if self.annotations[running_rr_number + 1] != Annotations::N {
                 if flag_dec {
                     *self.accumulator.dec.entry(index_dec).or_insert(0) += 1;
                     self.update_runs_addresses(vec![
@@ -186,8 +188,8 @@ impl RRRuns {
                 flag_dec = false;
                 flag_neu = false;
                 // rewinding to last bad beat
-                while self.annotations[running_rr_number] != 0
-                    || self.annotations[running_rr_number + 1] != 0
+                while self.annotations[running_rr_number] != Annotations::N
+                    || self.annotations[running_rr_number + 1] != Annotations::N
                 {
                     running_rr_number += 1;
                     if running_rr_number >= self.rr_intervals.len() - 1 {
@@ -199,21 +201,21 @@ impl RRRuns {
                 if running_rr_number < self.rr_intervals.len() - 1 {
                     if self.rr_intervals[running_rr_number]
                         < self.rr_intervals[running_rr_number + 1]
-                        && self.annotations[running_rr_number + 1] == 0
+                        && self.annotations[running_rr_number + 1] == Annotations::N
                     {
                         flag_dec = true;
                         index_dec += 1;
                     }
                     if self.rr_intervals[running_rr_number]
                         > self.rr_intervals[running_rr_number + 1]
-                        && self.annotations[running_rr_number + 1] == 0
+                        && self.annotations[running_rr_number + 1] == Annotations::N
                     {
                         flag_acc = true;
                         index_acc += 1;
                     }
                     if self.rr_intervals[running_rr_number]
                         == self.rr_intervals[running_rr_number + 1]
-                        && self.annotations[running_rr_number + 1] == 0
+                        && self.annotations[running_rr_number + 1] == Annotations::N
                     {
                         flag_neu = true;
                         index_neu += 1;
@@ -234,8 +236,8 @@ impl RRRuns {
                 Smaller,
                 Equal,
             }
-            let both_normal = self.annotations[running_rr_number] == 0
-                && self.annotations[running_rr_number + 1] == 0;
+            let both_normal = self.annotations[running_rr_number] == Annotations::N
+                && self.annotations[running_rr_number + 1] == Annotations::N;
 
             if both_normal {
                 let comparison = if self.rr_intervals[running_rr_number + 1]
