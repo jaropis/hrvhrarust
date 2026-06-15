@@ -1,5 +1,6 @@
 use crate::common::Annotations;
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AsymVarDesc {
     rr_intervals: Vec<f64>,
     annotations: Vec<Annotations>,
