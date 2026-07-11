@@ -1,6 +1,6 @@
-use std::arch::aarch64::int64x1_t;
-
 use crate::common::Annotations;
+use crate::stat_funcs::mean;
+use crate::stat_funcs::sd;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -168,6 +168,6 @@ impl AsymVarDesc {
             let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
             diff[i] = local_diff / 2_f64.sqrt();
         }
-        return diff[0];
+        return sd(&diff, true);
     }
 }
