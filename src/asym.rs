@@ -1,4 +1,7 @@
+use std::arch::aarch64::int64x1_t;
+
 use crate::common::Annotations;
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct AsymVarDesc {
@@ -38,7 +41,6 @@ pub struct PoincarePlot {
 impl AsymVarDesc {
     pub fn new(rr_intervals: Vec<f64>, annotations: Vec<Annotations>) -> Self {
         let length = rr_intervals.len();
-
         return AsymVarDesc {
             rr_intervals: rr_intervals,
             annotations: annotations,
@@ -68,6 +70,7 @@ impl AsymVarDesc {
         self.mean_rr = self.mean_rr_full();
         self.sdnn = self.sd(true, true);
         self.analyzed = true;
+        self.sd1 = self.sd1();
     }
 
     fn get_quality_stats(&self) -> QualityStats {
@@ -157,5 +160,14 @@ impl AsymVarDesc {
         let y = term - comp;
         let t = var_accu + y;
         return ((t - var_accu) - y, t); // this returns the new values of comp and var_accu, in order
+    }
+    fn sd1(&self) -> f64 {
+        let pp_len = self.pp.xi.len();
+        let mut diff = vec![0.0; pp_len];
+        for i in 0..pp_len {
+            let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
+            diff[i] = local_diff / 2_f64.sqrt();
+        }
+        return diff[0];
     }
 }
