@@ -49,7 +49,7 @@ impl AsymVarDesc {
             time_length: 1.0,
             mean_rr: 0.0,
             sdnn: 0.0,
-            sd1: 1.0,
+            sd1: 0.0,
             sd2: 1.0,
             pp: PoincarePlot {
                 xi: vec![],
@@ -71,6 +71,9 @@ impl AsymVarDesc {
         self.sdnn = self.sd(true, true);
         self.analyzed = true;
         self.sd1 = self.sd1();
+        self.sd2 = self.sd2();
+        self.sd1d = self.sd1d();
+        self.sd1a = self.sd1a();
     }
 
     fn get_quality_stats(&self) -> QualityStats {
@@ -167,6 +170,39 @@ impl AsymVarDesc {
         for i in 0..pp_len {
             let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
             diff[i] = local_diff / 2_f64.sqrt();
+        }
+        return sd(&diff, true);
+    }
+    // don't tell me that the two functions differ only by sign - I am aware and I want it!
+    fn sd2(&self) -> f64 {
+        let pp_len = self.pp.xi.len();
+        let mut diff = vec![0.0; pp_len];
+        for i in 0..pp_len {
+            let local_diff = &self.pp.xii[i] + &self.pp.xi[i];
+            diff[i] = local_diff / 2_f64.sqrt();
+        }
+        return sd(&diff, true);
+    }
+
+    fn sd1d(&self) -> f64 {
+        let pp_len = self.pp.xi.len();
+        let mut diff = vec![0.0; pp_len];
+        for i in 0..pp_len {
+            if self.pp.xi[i] > 0.0 {
+                let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
+                diff[i] = local_diff / 2_f64.sqrt();
+            }
+        }
+        return sd(&diff, true);
+    }
+    fn sd1a(&self) -> f64 {
+        let pp_len = self.pp.xi.len();
+        let mut diff = vec![0.0; pp_len];
+        for i in 0..pp_len {
+            if self.pp.xi[i] < 0.0 {
+                let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
+                diff[i] = local_diff / 2_f64.sqrt();
+            }
         }
         return sd(&diff, true);
     }
