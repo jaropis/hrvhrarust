@@ -151,3 +151,11 @@ fn test_asym_sd() -> io::Result<()> {
     assert_eq!((asym_var.sdnn * 1000.0).round() / 1000.0, 0.707);
     Ok(())
 }
+
+#[test]
+fn test_sd_partition() -> io::Result<()> {
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    Ok(())
+}
