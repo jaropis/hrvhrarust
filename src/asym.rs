@@ -7,6 +7,7 @@ use crate::stat_funcs::sd;
 pub struct AsymVarDesc {
     rr_intervals: Vec<f64>,
     annotations: Vec<Annotations>,
+    pp: PoincarePlot,
     length: usize,
     quality_stats: QualityStats,
     time_length: f64,
@@ -14,7 +15,7 @@ pub struct AsymVarDesc {
     pub sdnn: f64,
     sd1: f64,
     sd2: f64,
-    pp: PoincarePlot,
+    sd1_i: f64,
     sd1a: f64,
     sd1d: f64,
     sd2a: f64,
@@ -44,6 +45,10 @@ impl AsymVarDesc {
         return AsymVarDesc {
             rr_intervals: rr_intervals,
             annotations: annotations,
+            pp: PoincarePlot {
+                xi: vec![],
+                xii: vec![],
+            },
             length: length,
             quality_stats: QualityStats::default(),
             time_length: 1.0,
@@ -51,10 +56,7 @@ impl AsymVarDesc {
             sdnn: 0.0,
             sd1: 0.0,
             sd2: 1.0,
-            pp: PoincarePlot {
-                xi: vec![],
-                xii: vec![],
-            },
+            sd1_i: 1.0,
             sd1a: 1.0,
             sd1d: 1.0,
             sd2a: 1.0,
@@ -71,9 +73,8 @@ impl AsymVarDesc {
         self.sdnn = self.sd(true, true);
         self.analyzed = true;
         self.sd1 = self.sd1();
-        self.sd2 = self.sd2();
-        self.sd1d = self.sd1d();
-        self.sd1a = self.sd1a();
+        (self.sd2, self.sd2d, self.sd2a) = self.sd2();
+        (self.sd1_i, self.sd1d, self.sd1a) = self.sd1_i();
     }
 
     fn get_quality_stats(&self) -> QualityStats {
@@ -169,41 +170,67 @@ impl AsymVarDesc {
         let mut diff = vec![0.0; pp_len];
         for i in 0..pp_len {
             let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
-            diff[i] = local_diff / 2_f64.sqrt();
-        }
-        return sd(&diff, true);
-    }
-    // don't tell me that the two functions differ only by sign - I am aware and I want it!
-    fn sd2(&self) -> f64 {
-        let pp_len = self.pp.xi.len();
-        let mut diff = vec![0.0; pp_len];
-        for i in 0..pp_len {
-            let local_diff = &self.pp.xii[i] + &self.pp.xi[i];
-            diff[i] = local_diff / 2_f64.sqrt();
+            diff[i] = local_diff / 2.0;
         }
         return sd(&diff, true);
     }
 
-    fn sd1d(&self) -> f64 {
+    fn sd2(&self) -> (f64, f64, f64) {
         let pp_len = self.pp.xi.len();
-        let mut diff = vec![0.0; pp_len];
+        let mut sum = vec![0.0; pp_len];
+        let mut var_2_d = 0.0;
+        let mut var_2_a = 0.0;
+        let modifier = 1.0 / (pp_len - 1) as f64; // -1 because pp are shorter by 1
+        let mean_rr_i = mean(&self.pp.xi);
+        let mean_rr_ii = mean(&self.pp.xii);
         for i in 0..pp_len {
-            if self.pp.xi[i] > 0.0 {
-                let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
-                diff[i] = local_diff / 2_f64.sqrt();
+            let local_sum = &self.pp.xii[i] + &self.pp.xi[i];
+            let local_l2_perp_dist =
+                (&self.pp.xi[i] - mean_rr_i + &self.pp.xii[i] - mean_rr_ii) / 2_f64.sqrt();
+            let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
+            sum[i] = local_sum / 2_f64.sqrt();
+            let local_l2_perp_dist_squared = local_l2_perp_dist * local_l2_perp_dist;
+            if local_diff > 0.0 {
+                var_2_d += local_l2_perp_dist_squared;
+            }
+            if local_diff < 0. {
+                var_2_a += local_l2_perp_dist_squared;
+            }
+            if local_diff == 0. {
+                // spreading the variance on l1 equally between accelerations and decelerations
+                var_2_d += 0.5 * local_l2_perp_dist_squared;
+                var_2_a += 0.5 * local_l2_perp_dist_squared;
             }
         }
-        return sd(&diff, true);
+        // note that the way of calculating sd2 is totally different from the way of calculating
+        // sd2d and sd2a - this is done to facilitate testing the partitioning
+        return (
+            sd(&sum, true),
+            (modifier * var_2_d).sqrt(),
+            (modifier * var_2_a).sqrt(),
+        );
     }
-    fn sd1a(&self) -> f64 {
+    fn sd1_i(&self) -> (f64, f64, f64) {
         let pp_len = self.pp.xi.len();
-        let mut diff = vec![0.0; pp_len];
+        let mut var_1_i = 0.0;
+        let mut var_1_d = 0.0;
+        let mut var_1_a = 0.0;
+        let modifier = (1.0 / pp_len as f64) * 1.0 / 2.;
         for i in 0..pp_len {
-            if self.pp.xi[i] < 0.0 {
-                let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
-                diff[i] = local_diff / 2_f64.sqrt();
+            let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
+            let local_diff_squared = local_diff * local_diff;
+            var_1_i += local_diff_squared / 2.;
+            if local_diff > 0.0 {
+                var_1_d += local_diff_squared / 2.;
+            }
+            if local_diff < 0.0 {
+                var_1_a += local_diff_squared / 2.;
             }
         }
-        return sd(&diff, true);
+        return (
+            (modifier * var_1_i).sqrt(),
+            (modifier * var_1_d).sqrt(),
+            (modifier * var_1_a).sqrt(),
+        );
     }
 }
