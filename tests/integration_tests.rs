@@ -148,14 +148,50 @@ fn test_asym_sd() -> io::Result<()> {
     let annot_data = Annotations::to_vec_of_annot(vec![0, 0, 0, 0, 0, 0, 0, 0, 0]);
     let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_data, annot_data);
     asym_var.analyze_asym_var();
-    assert_eq!((asym_var.sdnn * 1000.0).round() / 1000.0, 0.707);
+    assert_eq!((asym_var.sdnn * 1000.0).round() / 1000.0, 0.667);
     Ok(())
 }
 
 #[test]
-fn test_sd_partition() -> io::Result<()> {
+fn test_sdnn_partition() -> io::Result<()> {
+    // sdnn^2 = 2 * (sd1^2 + sd2^2)
     let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
     let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
     asym_var.analyze_asym_var();
+    let test_var = asym_var.sd1.powi(2) + asym_var.sd2.powi(2) - 2. * asym_var.sdnn.powi(2);
+    assert!(test_var < 1.0);
+    Ok(())
+}
+
+#[test]
+fn test_sd1_i_partition() -> io::Result<()> {
+    // sd1_i^ = sd1a^2 + sd1d^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sd1a.powi(2) + asym_var.sd1d.powi(2) - asym_var.sd1_i.powi(2);
+    assert!(test_var < 0.000000000001);
+    Ok(())
+}
+
+#[test]
+fn test_sd1_partition() -> io::Result<()> {
+    // sd1^2 ~ sd1a^2 + sd1d^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sd1a.powi(2) + asym_var.sd1d.powi(2) - asym_var.sd1_i.powi(2);
+    assert!(test_var.abs() < 0.01);
+    Ok(())
+}
+
+#[test]
+fn test_sd2_partition() -> io::Result<()> {
+    // sd2^ = sd2a^2 + sd2d^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sd2a.powi(2) + asym_var.sd2d.powi(2) - asym_var.sd2.powi(2);
+    assert!(test_var < 0.000000000001);
     Ok(())
 }

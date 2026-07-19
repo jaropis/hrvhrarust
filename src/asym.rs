@@ -9,19 +9,19 @@ pub struct AsymVarDesc {
     annotations: Vec<Annotations>,
     pp: PoincarePlot,
     length: usize,
-    quality_stats: QualityStats,
-    time_length: f64,
+    pub quality_stats: QualityStats,
+    pub time_length: f64,
     pub mean_rr: f64,
     pub sdnn: f64,
-    sd1: f64,
-    sd2: f64,
-    sd1_i: f64,
-    sd1a: f64,
-    sd1d: f64,
-    sd2a: f64,
-    sd2d: f64,
-    sdnn_a: f64,
-    sdnn_d: f64,
+    pub sd1: f64,
+    pub sd2: f64,
+    pub sd1_i: f64,
+    pub sd1a: f64,
+    pub sd1d: f64,
+    pub sd2a: f64,
+    pub sd2d: f64,
+    pub sdnn_a: f64,
+    pub sdnn_d: f64,
     analyzed: bool,
 }
 
@@ -70,11 +70,13 @@ impl AsymVarDesc {
         self.quality_stats = self.get_quality_stats();
         self.pp = self.form_pp();
         self.mean_rr = self.mean_rr_full();
-        self.sdnn = self.sd(true, true);
+        self.sdnn = self.sd(false, true);
         self.analyzed = true;
         self.sd1 = self.sd1();
         (self.sd2, self.sd2d, self.sd2a) = self.sd2();
         (self.sd1_i, self.sd1d, self.sd1a) = self.sd1_i();
+        self.sdnn_a = (1. / 2. * (self.sd1a.powi(2) + self.sd2a.powi(2))).sqrt();
+        self.sdnn_d = (1. / 2. * (self.sd1d.powi(2) + self.sd2d.powi(2))).sqrt();
     }
 
     fn get_quality_stats(&self) -> QualityStats {
@@ -170,9 +172,9 @@ impl AsymVarDesc {
         let mut diff = vec![0.0; pp_len];
         for i in 0..pp_len {
             let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
-            diff[i] = local_diff / 2.0;
+            diff[i] = local_diff / 2.0_f64.sqrt();
         }
-        return sd(&diff, true);
+        return sd(&diff, false);
     }
 
     fn sd2(&self) -> (f64, f64, f64) {
@@ -180,7 +182,7 @@ impl AsymVarDesc {
         let mut sum = vec![0.0; pp_len];
         let mut var_2_d = 0.0;
         let mut var_2_a = 0.0;
-        let modifier = 1.0 / (pp_len - 1) as f64; // -1 because pp are shorter by 1
+        let modifier = 1.0 / (pp_len) as f64; // -1 because pp are shorter by 1
         let mean_rr_i = mean(&self.pp.xi);
         let mean_rr_ii = mean(&self.pp.xii);
         for i in 0..pp_len {
@@ -205,7 +207,7 @@ impl AsymVarDesc {
         // note that the way of calculating sd2 is totally different from the way of calculating
         // sd2d and sd2a - this is done to facilitate testing the partitioning
         return (
-            sd(&sum, true),
+            sd(&sum, false),
             (modifier * var_2_d).sqrt(),
             (modifier * var_2_a).sqrt(),
         );
@@ -215,7 +217,7 @@ impl AsymVarDesc {
         let mut var_1_i = 0.0;
         let mut var_1_d = 0.0;
         let mut var_1_a = 0.0;
-        let modifier = (1.0 / pp_len as f64) * 1.0 / 2.;
+        let modifier = (1.0 / pp_len as f64);
         for i in 0..pp_len {
             let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
             let local_diff_squared = local_diff * local_diff;
