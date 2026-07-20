@@ -7,7 +7,7 @@ use crate::stat_funcs::sd;
 pub struct AsymVarDesc {
     rr_intervals: Vec<f64>,
     annotations: Vec<Annotations>,
-    pp: PoincarePlot,
+    pub pp: PoincarePlot,
     length: usize,
     pub quality_stats: QualityStats,
     pub time_length: f64,
@@ -69,7 +69,7 @@ impl AsymVarDesc {
     pub fn analyze_asym_var(&mut self) {
         self.quality_stats = self.get_quality_stats();
         self.pp = self.form_pp();
-        self.mean_rr = self.mean_rr_full();
+        self.mean_rr = self.mean_rr_ordinary();
         self.sdnn = self.sd(false, true);
         self.analyzed = true;
         self.sd1 = self.sd1();
@@ -109,15 +109,43 @@ impl AsymVarDesc {
         }
         return PoincarePlot { xi: xi, xii: xii };
     }
-    fn mean_rr_full(&self) -> f64 {
-        // this is a regular mean from all RR's that are of sinus origin
+    /* fn mean_rr_full(&mut self) -> f64 {
+        // leaving this as a memento - mean can't be calculated as below
         let mut accumulator = 0.0;
         let length = self.pp.xi.len() - 1;
         for i in 0..self.pp.xi.len() as usize {
             accumulator = accumulator + self.pp.xi[i];
         }
         accumulator = accumulator + self.pp.xii[length];
+        self.extra = format!(
+            "full_length: {}, {}, {}\n",
+            self.extra,
+            accumulator,
+            self.pp.xi.len() + 1
+        );
         return accumulator / (self.pp.xi.len() + 1) as f64;
+    } */
+    fn mean_rr_ordinary(&mut self) -> f64 {
+        let len = self.rr_intervals.len();
+        let mut accumulator = 0.0;
+        let mut len_accumulator = 0;
+        for i in 0..len {
+            if self.annotations[i] == Annotations::N {
+                accumulator += self.rr_intervals[i];
+                len_accumulator += 1;
+            }
+        }
+        /*
+        debugging statement
+        self.extra = format!(
+            "{}, {}, {}, {}, mean: {}",
+            self.extra,
+            "ordinary:",
+            accumulator,
+            len_accumulator,
+            accumulator / len_accumulator as f64
+        ); */
+        return accumulator / len_accumulator as f64;
     }
     fn mean_rr_pp(&self) -> f64 {
         // this is calculated from xi only
