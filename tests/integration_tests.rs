@@ -187,11 +187,22 @@ fn test_sd1_partition() -> io::Result<()> {
 
 #[test]
 fn test_sd2_partition() -> io::Result<()> {
-    // sd2^ = sd2a^2 + sd2d^2
+    // sd2^2 = sd2a^2 + sd2d^2
     let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
     let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
     asym_var.analyze_asym_var();
     let test_var = asym_var.sd2a.powi(2) + asym_var.sd2d.powi(2) - asym_var.sd2.powi(2);
     assert!(test_var < 0.000000000001);
+    Ok(())
+}
+
+#[test]
+fn test_sdnn_ad_partition() -> io::Result<()> {
+    // sdnn^2 ~ sdnna^2 + sdnnd^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sdnn_a.powi(2) + asym_var.sdnn_d.powi(2) - asym_var.sdnn.powi(2);
+    assert!(test_var < 1.);
     Ok(())
 }
