@@ -70,7 +70,7 @@ impl AsymVarDesc {
         self.quality_stats = self.get_quality_stats();
         self.pp = self.form_pp();
         self.mean_rr = self.mean_rr_ordinary();
-        self.sdnn = self.sd(false, true);
+        self.sdnn = self.sd(false);
         self.analyzed = true;
         self.sd1 = self.sd1();
         (self.sd2, self.sd2d, self.sd2a) = self.sd2();
@@ -158,43 +158,17 @@ impl AsymVarDesc {
     /// Returns the standard deviation
     /// #Arguments
     /// * `sample` - Whether sample sd or sd as an estimator should be estimated
-    /// * `full` - Whether the sd for the full recording should be calculated, or only for xi?
-    fn sd(&self, sample: bool, full: bool) -> f64 {
-        let mut var_accu = 0.0;
-        let mut comp = 0.0;
-        let (mean, n) = if full {
-            (self.mean_rr, self.pp.xi.len() + 1)
-        } else {
-            (self.mean_rr_pp(), self.pp.xi.len())
-        };
-
-        if n == 0 || (sample && n < 2) {
-            return 0.0;
-        }
-
-        if full {
-            for rr in &self.pp.xi {
-                (comp, var_accu) = self.sum_of_squares(*rr, mean, comp, var_accu);
-            }
-            if let Some(last) = self.pp.xii.last() {
-                (_, var_accu) = self.sum_of_squares(*last, mean, comp, var_accu);
-            }
-        } else {
-            for rr in &self.pp.xi {
-                (comp, var_accu) = self.sum_of_squares(*rr, mean, comp, var_accu);
+    fn sd(&self, sample: bool) -> f64 {
+        let mut rri: Vec<f64> = vec![];
+        for i in 0..self.rr_intervals.len() {
+            if self.annotations[i] == Annotations::N {
+                rri.push(self.rr_intervals[i])
             }
         }
 
-        let divisor = if sample { n - 1 } else { n };
-        return (var_accu / divisor as f64).sqrt();
+        return sd(&rri, sample);
     }
-    fn sum_of_squares(&self, rr: f64, mean: f64, comp: f64, var_accu: f64) -> (f64, f64) {
-        let diff = rr - mean;
-        let term = diff * diff;
-        let y = term - comp;
-        let t = var_accu + y;
-        return ((t - var_accu) - y, t); // this returns the new values of comp and var_accu, in order
-    }
+
     fn sd1(&self) -> f64 {
         let pp_len = self.pp.xi.len();
         let mut diff = vec![0.0; pp_len];
