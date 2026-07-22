@@ -1,8 +1,9 @@
 use std::io;
 // Import the needed types from your library
+use hrvhra_rust::asym::AsymVarDesc;
+use hrvhra_rust::common::Annotations;
 use hrvhra_rust::data_reader::RRSeries;
 use hrvhra_rust::runs::RRRuns;
-
 // runs integration tests
 #[test]
 fn test_case_1() -> io::Result<()> {
@@ -77,6 +78,29 @@ fn test_case_7() -> io::Result<()> {
     Ok(())
 }
 
+// last beat normal, all preceding beats bad - the OOB regression case; must not
+// panic and must report no runs
+#[test]
+fn test_case_trailing_normal() -> io::Result<()> {
+    let rr_series = RRSeries::read_rr("tests/data/test8.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+    rr.get_full_runs();
+
+    assert_eq!(rr.get_runs_summary(), vec![vec![0, 0, 0]]);
+    Ok(())
+}
+
+// every beat annotated as bad (non-sinus) - must not panic and must report no runs
+#[test]
+fn test_case_all_bad() -> io::Result<()> {
+    let rr_series = RRSeries::read_rr("tests/data/test9.csv")?;
+    let mut rr = RRRuns::new(rr_series.rr, rr_series.annot, true);
+    rr.get_full_runs();
+
+    assert_eq!(rr.get_runs_summary(), vec![vec![0, 0, 0]]);
+    Ok(())
+}
+
 // sample entropy integration tests
 #[test]
 fn test_entropy_case_1() -> io::Result<()> {
@@ -105,5 +129,80 @@ fn test_entropy_known_values() -> io::Result<()> {
     let r = 0.5;
     let sampen = hrvhra_rust::samp_en::calc_samp_en(&signal, 2, r);
     assert!(!sampen.is_finite());
+    Ok(())
+}
+
+#[test]
+fn test_asym_mean() -> io::Result<()> {
+    let rr_data = vec![0., 1., 1., 0., 0., 1., 2., 1., 0.];
+    let annot_data = Annotations::to_vec_of_annot(vec![0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_data, annot_data);
+    asym_var.analyze_asym_var();
+    assert_eq!((asym_var.mean_rr * 1000.0).round() / 1000.0, 0.667);
+    Ok(())
+}
+
+#[test]
+fn test_asym_sd() -> io::Result<()> {
+    let rr_data = vec![0., 1., 1., 0., 0., 1., 2., 1., 0.];
+    let annot_data = Annotations::to_vec_of_annot(vec![0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_data, annot_data);
+    asym_var.analyze_asym_var();
+    assert_eq!((asym_var.sdnn * 1000.0).round() / 1000.0, 0.667);
+    Ok(())
+}
+
+#[test]
+fn test_sdnn_partition() -> io::Result<()> {
+    // sdnn^2 = 2 * (sd1^2 + sd2^2)
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sd1.powi(2) + asym_var.sd2.powi(2) - 2. * asym_var.sdnn.powi(2);
+    assert!(test_var < 1.0);
+    Ok(())
+}
+
+#[test]
+fn test_sd1_i_partition() -> io::Result<()> {
+    // sd1_i^ = sd1a^2 + sd1d^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sd1a.powi(2) + asym_var.sd1d.powi(2) - asym_var.sd1_i.powi(2);
+    assert!(test_var < 0.000000000001);
+    Ok(())
+}
+
+#[test]
+fn test_sd1_partition() -> io::Result<()> {
+    // sd1^2 ~ sd1a^2 + sd1d^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sd1a.powi(2) + asym_var.sd1d.powi(2) - asym_var.sd1_i.powi(2);
+    assert!(test_var.abs() < 0.01);
+    Ok(())
+}
+
+#[test]
+fn test_sd2_partition() -> io::Result<()> {
+    // sd2^2 = sd2a^2 + sd2d^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sd2a.powi(2) + asym_var.sd2d.powi(2) - asym_var.sd2.powi(2);
+    assert!(test_var < 0.000000000001);
+    Ok(())
+}
+
+#[test]
+fn test_sdnn_ad_partition() -> io::Result<()> {
+    // sdnn^2 ~ sdnna^2 + sdnnd^2
+    let rr_series = RRSeries::read_rr("tests/data/test10.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    let test_var = asym_var.sdnn_a.powi(2) + asym_var.sdnn_d.powi(2) - asym_var.sdnn.powi(2);
+    assert!(test_var < 1.);
     Ok(())
 }
