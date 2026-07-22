@@ -219,7 +219,7 @@ impl AsymVarDesc {
         let mut var_1_i = 0.0;
         let mut var_1_d = 0.0;
         let mut var_1_a = 0.0;
-        let modifier = (1.0 / pp_len as f64);
+        let modifier = 1.0 / pp_len as f64;
         for i in 0..pp_len {
             let local_diff = &self.pp.xii[i] - &self.pp.xi[i];
             let local_diff_squared = local_diff * local_diff;

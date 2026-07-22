@@ -59,24 +59,7 @@ fn read_expected_results(path: impl AsRef<Path>) -> io::Result<HashMap<String, f
 }
 
 #[test]
-fn read_expected_results_reads_all_metrics() -> io::Result<()> {
-    let results = read_expected_results("tests/data/test_result12.csv")?;
-    let expected_names = [
-        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
-        "PI",
-    ];
-
-    assert_eq!(results.len(), expected_names.len());
-    for name in expected_names {
-        assert!(results.contains_key(name), "missing metric {name}");
-    }
-    assert!((results["SDNN"] - 74.0870762649683).abs() < 1e-12);
-
-    Ok(())
-}
-
-#[test]
-fn test_10_percent() -> io::Result<()> {
+fn test_16_6_percent() -> io::Result<()> {
     let results = read_expected_results("tests/data/test_result12.csv")?;
     let expected_names = [
         "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
@@ -89,6 +72,231 @@ fn test_10_percent() -> io::Result<()> {
     let rr_series = RRSeries::read_rr("tests/data/test12.csv")?;
     let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
     asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_25_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result13.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test13.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_33_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result14.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test14.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_41_6_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result15.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test15.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_50_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result16.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test16.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_58_3_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result17.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test17.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_66_6_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result18.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test18.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_75_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result19.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test19.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
+    assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
+    assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
+    assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
+    assert!((asym_var.sd1a - results["SD1a"]).abs() < 0.0000001);
+    assert!((asym_var.sd1d - results["SD1d"]).abs() < 0.0000001);
+    assert!((asym_var.sd2a - results["SD2a"]).abs() < 0.0000001);
+    assert!((asym_var.sd2d - results["SD2d"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_d - results["SDNNd"]).abs() < 0.0000001);
+    assert!((asym_var.sdnn_a - results["SDNNa"]).abs() < 0.0000001);
+    assert!((asym_var.mean_rr - results["MEAN_RR"]).abs() < 0.0000001);
+    Ok(())
+}
+
+#[test]
+fn test_83_percent() -> io::Result<()> {
+    let results = read_expected_results("tests/data/test_result20.csv")?;
+    let expected_names = [
+        "SDNN", "SD1", "SD2", "SD1I", "MEAN_RR", "SDNNd", "SDNNa", "SD1d", "SD1a", "SD2d", "SD2a",
+        "PI",
+    ];
+    assert_eq!(results.len(), expected_names.len());
+    for name in expected_names {
+        assert!(results.contains_key(name), "missing metric {name}");
+    }
+    let rr_series = RRSeries::read_rr("tests/data/test20.csv")?;
+    let mut asym_var: AsymVarDesc = AsymVarDesc::new(rr_series.rr.clone(), rr_series.annot.clone());
+    asym_var.analyze_asym_var();
+    assert!((asym_var.sdnn - results["SDNN"]).abs() < 0.0000001);
     assert!((asym_var.sd1 - results["SD1"]).abs() < 0.0000001);
     assert!((asym_var.sd2 - results["SD2"]).abs() < 0.0000001);
     assert!((asym_var.sd1_i - results["SD1I"]).abs() < 0.0000001);
