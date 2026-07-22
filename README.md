@@ -1,80 +1,140 @@
-# hrvhra rust Library
+# hrvhra_rust
 
-## Overview
-
-hrvhra rust is a Rust library designed for analyzing and processing RR intervals and similar data sequences. It provides efficient algorithms and data structures for working with time series, patterns, HRV and complexity parameters.
-
-## Installation
-
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-runs_rust = "0.1.0"
-```
-
-## Usage
-
-```rust
-use runs_rust::run_analysis;
-
-fn main() {
-    let data = vec![1, 1, 0, 0, 1, 1, 1, 0];
-    let analysis = run_analysis::analyze(&data);
-    println!("Number of runs: {}", analysis.run_count());
-    println!("Longest run: {}", analysis.longest_run());
-}
-```
-
-### Sample Entropy
-
-The library includes functionality to calculate Sample Entropy (SampEn), which measures the complexity of time series data by quantifying the unpredictability of fluctuations. This library implements Zurek's NCM algorithm:
-
-```rust
-use runs_rust::samp_en;
-
-fn main() {
-    // Create a time series signal
-    let signal = vec![1.2, 1.4, 1.3, 1.5, 1.3, 1.2, 1.4, 1.5];
-
-    // Calculate Sample Entropy with tolerance r = 0.2
-    let r = 0.2;
-    let entropy = samp_en::calc_samp_en(&signal, r);
-
-    println!("Sample Entropy: {}", entropy);
-
-    // For more detailed analysis, you can compute correlation sums
-    let m = 2; // embedding dimension
-    let corr_sums = samp_en::calc_correlation_sums(&signal, m, r);
-    println!("Correlation Sums: {:?}", corr_sums);
-}
-```
-
-Sample Entropy is particularly useful for analyzing physiological signals, financial time series, and other complex datasets where measuring randomness and regularity is important.
+`hrvhra_rust` is a Rust library for analysing ECG RR-interval series. It provides RR-series input handling, runs analysis, Sample Entropy, and Poincaré plot-based heart rate asymmetry (HRA) metrics.
 
 ## Features
 
-- Fast run identification and counting
-- Statistical analysis of run distributions
-- Support for various data types
-- Thread-safe implementations
-- Minimal dependencies
-- Sample Entropy calculation for time series complexity analysis
+- Typed annotations for normal, ventricular, supraventricular, and artefact beats
+- Acceleration, deceleration, and neutral runs analysis
+- Sample Entropy using the NCM algorithm
+- Poincaré plot-based HRV and HRA metrics for normal RR intervals
+- Mean and population or sample standard-deviation helpers
+
+## Installation
+
+Add the Git dependency to your `Cargo.toml`:
+
+```toml
+[dependencies]
+hrvhra_rust = { git = "https://github.com/jaropis/hrvhrarust.git" }
+```
+
+When developing against a local checkout, use a path dependency instead:
+
+```toml
+[dependencies]
+hrvhra_rust = { path = "../hrvhrarust" }
+```
+
+## RR-series input
+
+`RRSeries::read_rr` reads a whitespace-delimited text file. The first line is a header, and each subsequent row must begin with an RR interval and an annotation code:
+
+```text
+RR annot
+800.0 0
+810.0 0
+795.0 1
+805.0 0
+```
+
+| Code | `Annotations` variant | Meaning               |
+| ---- | --------------------- | --------------------- |
+| `0`  | `N`                   | Normal beat           |
+| `1`  | `V`                   | Ventricular beat      |
+| `2`  | `S`                   | Supraventricular beat |
+| `3`  | `X`                   | Artefact beat         |
+
+The reader does not convert RR units; use a single unit consistently when selecting parameters and interpreting metrics.
+
+## Heart rate asymmetry
+
+Use `AsymVarDesc` to calculate Poincaré plot-based HRV and HRA metrics. The analysis uses adjacent pairs for which both beats are annotated as normal.
+
+```rust
+use hrvhra_rust::{
+    asym::AsymVarDesc,
+    common::Annotations,
+};
+
+fn main() {
+    let rr = vec![800.0, 810.0, 795.0, 805.0, 820.0];
+    let annotations = Annotations::to_vec_of_annot(vec![0, 0, 0, 0, 0]);
+
+    let mut analysis = AsymVarDesc::new(rr, annotations);
+    analysis.analyze_asym_var();
+
+    println!("Mean RR: {}", analysis.mean_rr);
+    println!("SDNN: {}", analysis.sdnn);
+    println!("SD1: {}", analysis.sd1);
+    println!("SD2: {}", analysis.sd2);
+}
+```
+
+After calling `analyze_asym_var`, the following public fields contain the calculated metrics:
+
+- Overall metrics: `mean_rr`, `sdnn`, `sd1`, and `sd2`
+- Short-term asymmetry: `sd1_i`, `sd1a`, and `sd1d`
+- Long-term asymmetry: `sd2a` and `sd2d`
+- Combined asymmetry: `sdnn_a` and `sdnn_d`
+
+Provide RR intervals and annotations of equal length, with at least two consecutive normal beats for a meaningful Poincaré analysis.
+
+## Runs analysis
+
+`RRRuns` identifies acceleration, deceleration, and neutral runs among normal beats. `get_runs_summary` returns rows ordered by run length, with columns in the order acceleration, deceleration, and neutral.
+
+```rust
+use hrvhra_rust::{
+    data_reader::RRSeries,
+    runs::RRRuns,
+};
+
+fn main() -> std::io::Result<()> {
+    let series = RRSeries::read_rr("rr_intervals.txt")?;
+    let mut runs = RRRuns::new(series.rr, series.annot, true);
+
+    for (index, counts) in runs.get_runs_summary().iter().enumerate() {
+        let run_length = index + 1;
+        println!(
+            "length {run_length}: acceleration={}, deceleration={}, neutral={}",
+            counts[0], counts[1], counts[2]
+        );
+    }
+
+    Ok(())
+}
+```
+
+The third argument to `RRRuns::new` controls whether a run that reaches the end of the input is included. Inputs without a valid pair of consecutive normal beats return a single zero row.
+
+## Sample Entropy
+
+`calc_samp_en` calculates Sample Entropy for a signal, embedding dimension `m`, and comparison tolerance `r`.
+
+```rust
+use hrvhra_rust::samp_en::calc_samp_en;
+
+fn main() {
+    let signal = vec![800.0, 810.0, 795.0, 805.0, 820.0, 815.0];
+    let entropy = calc_samp_en(&signal, 2, 20.0);
+
+    println!("Sample Entropy: {entropy}");
+}
+```
+
+If no matching template pairs are found, the result may be non-finite. Check `entropy.is_finite()` when consuming the result.
+
+## Testing
+
+Run the complete test suite with:
+
+```shell
+cargo test --all-targets
+```
+
+The suite covers numerical helpers, runs edge cases, HRA metric partitions, and consistency cases spanning multiple ectopy levels.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contact
-
-Homepage: [https://www.opengranary.com](https://www.opengranary.com)
+Issues and pull requests are welcome.
