@@ -1,4 +1,5 @@
 use crate::common::Annotations;
+use crate::runs_asym_helpers::get_mean_for_sd1;
 use std::cmp;
 use std::collections::HashMap;
 
@@ -482,13 +483,15 @@ impl RRRuns {
                 .runs_variances
                 .entry(run_type_enum)
                 .or_insert_with(|| vec![0.0; max_len]);
+            let sd1_mean = get_mean_for_sd1(&self.rr_intervals, &self.annotations);
             let mut local_run_variance = 0.0; // initial variance - it is 0, of course - it will be cumulatively calculated in the loop below
             for i in (rr_index - length)..rr_index {
-                local_run_variance +=
-                    (&self.rr_intervals[i as usize + 1] - &self.rr_intervals[i as usize]).powi(2)
-                        / 2_f64.sqrt();
+                local_run_variance += ((&self.rr_intervals[i as usize + 1]
+                    - &self.rr_intervals[i as usize]
+                    - sd1_mean)
+                    .powi(2))
+                    / 2_f64.sqrt();
             }
-
             run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
     }

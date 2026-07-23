@@ -35,8 +35,8 @@ pub struct QualityStats {
 
 #[derive(Debug, Clone)]
 pub struct PoincarePlot {
-    xi: Vec<f64>,
-    xii: Vec<f64>,
+    pub xi: Vec<f64>,
+    pub xii: Vec<f64>,
 }
 
 impl AsymVarDesc {
