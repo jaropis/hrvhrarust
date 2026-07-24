@@ -490,12 +490,19 @@ impl RRRuns {
                     - &self.rr_intervals[i as usize]
                     - sd1_mean)
                     .powi(2))
-                    / 2_f64.sqrt();
+                    / 2.0;
             }
             run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
     }
     pub fn print_runs_variances(&self) {
         println!("{:?}", self.runs_variances)
+    }
+    pub fn sum_variances(self) -> f64{
+        let mut sum_var = 0.
+        for var in self.runs_variances {
+            sum_var += var;
+        }   
+        return sum_var;
     }
 }
