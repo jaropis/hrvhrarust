@@ -362,6 +362,7 @@ impl RRRuns {
             println!("the last run not needed");
         }
         self.set_max();
+        self.calculate_runs_variances();
         self.analyzed = true;
     }
 
@@ -456,10 +457,7 @@ impl RRRuns {
         println!("acc: {:?}", self.accumulator.acc);
         println!("neu: {:?}", self.accumulator.neu);
     }
-    pub fn calculate_runs_variances(&mut self) {
-        if !self.analyzed {
-            self.analyze_runs();
-        }
+    fn calculate_runs_variances(&mut self) {
         for run in &self.accumulator.runs_addresses {
             let rr_index = run[0];
             let length = run[1];
@@ -496,13 +494,19 @@ impl RRRuns {
         }
     }
     pub fn print_runs_variances(&self) {
-        println!("{:?}", self.runs_variances)
+        let sum_var = self.sum_variances();
+        println!(
+            "square root of the sum of all variances is: {}, individual are: {:?}",
+            sum_var, self.runs_variances
+        )
     }
-    pub fn sum_variances(self) -> f64{
-        let mut sum_var = 0.
-        for var in self.runs_variances {
-            sum_var += var;
-        }   
-        return sum_var;
+    fn sum_variances(&self) -> f64 {
+        let mut sum_var = 0.;
+        for (_, runvar) in &self.runs_variances {
+            for var in runvar {
+                sum_var += var;
+            }
+        }
+        return sum_var.sqrt();
     }
 }

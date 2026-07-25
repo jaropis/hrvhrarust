@@ -6,7 +6,9 @@ use crate::common::Annotations;
 fn runs_form_pp(rr_intervals: &Vec<f64>, annotations: &Vec<Annotations>) -> PoincarePlot {
     let mut xi: Vec<f64> = vec![];
     let mut xii: Vec<f64> = vec![];
-    for idx in 0..xi.len() - 1 {
+    println!("run rr intervals: {:?}", rr_intervals);
+    println!("annotations: {:?}", annotations);
+    for idx in 0..(rr_intervals.len() - 1) {
         if (annotations[idx] == Annotations::N) & (annotations[idx + 1] == Annotations::N) {
             xi.push(rr_intervals[idx]);
             xii.push(rr_intervals[idx + 1])
