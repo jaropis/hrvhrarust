@@ -1,5 +1,5 @@
 use crate::common::Annotations;
-use crate::runs_asym_helpers::get_mean_for_sd1;
+use crate::runs_asym_helpers::{get_mean_for_sd1, sd1_i};
 use std::cmp;
 use std::collections::HashMap;
 
@@ -481,16 +481,27 @@ impl RRRuns {
                 .runs_variances
                 .entry(run_type_enum)
                 .or_insert_with(|| vec![0.0; max_len]);
-            let sd1_mean = get_mean_for_sd1(&self.rr_intervals, &self.annotations);
-            let mut local_run_variance = 0.0; // initial variance - it is 0, of course - it will be cumulatively calculated in the loop below
-            for i in (rr_index - length)..rr_index {
-                local_run_variance += ((&self.rr_intervals[i as usize + 1]
-                    - &self.rr_intervals[i as usize]
-                    - sd1_mean)
-                    .powi(2))
-                    / 2.0;
+            let start = if rr_index - length == 0 {
+                0
+            } else {
+                rr_index - length - 1
+            };
+            let mut var_1_i = 0.0;
+            let mut var_1_d = 0.0;
+            let mut var_1_a = 0.0;
+            let modifier = 1.0 / (rr_index - start) as f64;
+            for i in start..rr_index {
+                let local_diff =
+                    self.rr_intervals[(i + 1) as usize] - self.rr_intervals[i as usize];
+                let local_diff_squared = local_diff * local_diff;
+                var_1_i += local_diff_squared / 2.;
+                if local_diff > 0.0 {
+                    var_1_d += local_diff_squared / 2.;
+                }
+                if local_diff < 0.0 {
+                    var_1_a += local_diff_squared / 2.;
+                }
             }
-            run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
     }
     pub fn print_runs_variances(&self) {

@@ -237,4 +237,17 @@ impl AsymVarDesc {
             (modifier * var_1_a).sqrt(),
         );
     }
+    pub fn print_asym_results(self) {
+        println!("the results are sdnn: {}, sd1: {}, sd1_i: {}, sd2: {}, sd1d: {}, sd1a: {}, sd2d: {}, sd2a: {}, sdnn_d: {}, sdnn_a: {}", 
+        self.sdnn, 
+        self.sd1, 
+        self.sd1_i, 
+        self.sd2, 
+        self.sd1d, 
+        self.sd1a, 
+        self.sd2d, 
+        self.sd2a, 
+        self.sdnn_d, 
+        self.sdnn_a);
+    }
 }
