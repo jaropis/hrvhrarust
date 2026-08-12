@@ -502,6 +502,8 @@ impl RRRuns {
                     var_1_a += local_diff_squared / 2.;
                 }
             }
+            // you need to put the variuos runs vars into the array below!
+            //run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
     }
     pub fn print_runs_variances(&self) {
