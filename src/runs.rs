@@ -483,12 +483,13 @@ impl RRRuns {
                 .runs_variances
                 .entry(run_type_enum)
                 .or_insert_with(|| vec![0.0; max_len]);
+            let mut local_run_variance = 0.;
             for i in (rr_index - length)..rr_index {
-                local_run_variance += ((&self.rr_intervals[i as usize + 1]
-                    - &self.rr_intervals[i as usize]
-                    - sd1_mean)
-                    .powi(2))
-                    / 2_f64.sqrt();
+                let Some(local_var1) = point_sd1_i_vars[i as usize] else {
+                    println!("THIS CANNOT HAPPEN!");
+                    return;
+                };
+                local_run_variance += local_var1 * modifier;
             }
             run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
