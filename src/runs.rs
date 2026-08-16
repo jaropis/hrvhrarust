@@ -458,6 +458,8 @@ impl RRRuns {
         println!("neu: {:?}", self.accumulator.neu);
     }
     fn calculate_runs_variances(&mut self) {
+        // getting the vector with all sd1_i related variances for each point + the modifier;
+        let (point_sd1_i_vars, modifier) = sd1_i(&self.rr_intervals, &self.annotations);
         for run in &self.accumulator.runs_addresses {
             let rr_index = run[0];
             let length = run[1];
@@ -481,29 +483,6 @@ impl RRRuns {
                 .runs_variances
                 .entry(run_type_enum)
                 .or_insert_with(|| vec![0.0; max_len]);
-            let start = if rr_index - length == 0 {
-                0
-            } else {
-                rr_index - length - 1
-            };
-            let mut var_1_i = 0.0;
-            let mut var_1_d = 0.0;
-            let mut var_1_a = 0.0;
-            let modifier = 1.0 / (rr_index - start) as f64;
-            for i in start..rr_index {
-                let local_diff =
-                    self.rr_intervals[(i + 1) as usize] - self.rr_intervals[i as usize];
-                let local_diff_squared = local_diff * local_diff;
-                var_1_i += local_diff_squared / 2.;
-                if local_diff > 0.0 {
-                    var_1_d += local_diff_squared / 2.;
-                }
-                if local_diff < 0.0 {
-                    var_1_a += local_diff_squared / 2.;
-                }
-            }
-            // you need to put the variuos runs vars into the array below!
-            //run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
     }
     pub fn print_runs_variances(&self) {
