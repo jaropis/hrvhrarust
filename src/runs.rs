@@ -485,10 +485,7 @@ impl RRRuns {
                 .or_insert_with(|| vec![0.0; max_len]);
             let mut local_run_variance = 0.;
             for i in (rr_index - length)..rr_index {
-                let Some(local_var1) = point_sd1_i_vars[i as usize] else {
-                    println!("THIS CANNOT HAPPEN!");
-                    return;
-                };
+                let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 local_run_variance += local_var1 * modifier;
             }
             run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
