@@ -460,6 +460,8 @@ impl RRRuns {
     fn calculate_runs_variances(&mut self) {
         // getting the vector with all sd1_i related variances for each point + the modifier;
         let (point_sd1_i_vars, modifier) = sd1_i(&self.rr_intervals, &self.annotations);
+        println!("vector is: {:?}", point_sd1_i_vars);
+        println!("runs addresses are: {:?}", self.accumulator.runs_addresses);
         for run in &self.accumulator.runs_addresses {
             let rr_index = run[0];
             let length = run[1];
@@ -484,7 +486,9 @@ impl RRRuns {
                 .entry(run_type_enum)
                 .or_insert_with(|| vec![0.0; max_len]);
             let mut local_run_variance = 0.;
-            for i in (rr_index - length)..rr_index {
+            println!("seria od {}, do {}", rr_index - length + 1, rr_index);
+            for i in (rr_index - length + 1)..=rr_index {
+                println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
                 let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 local_run_variance += local_var1 * modifier;
             }
@@ -505,6 +509,6 @@ impl RRRuns {
                 sum_var += var;
             }
         }
-        return sum_var.sqrt();
+        return sum_var;
     }
 }

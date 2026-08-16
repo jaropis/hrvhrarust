@@ -40,7 +40,7 @@ pub fn sd1_i(rr_intervals: &Vec<f64>, annotations: &Vec<Annotations>) -> (Vec<Op
             none_counter += 1;
             continue;
         }
-        let local_diff = rr_intervals[i + 1] - rr_intervals[i];
+        let local_diff = rr_intervals[i] - rr_intervals[i - 1];
         let local_diff_squared = local_diff * local_diff;
         var_1_i += local_diff_squared / 2.;
         if local_diff > 0.0 {
@@ -50,6 +50,9 @@ pub fn sd1_i(rr_intervals: &Vec<f64>, annotations: &Vec<Annotations>) -> (Vec<Op
         if local_diff < 0.0 {
             point_sd1_i_vars[i] = Some(local_diff_squared / 2.);
             var_1_a += local_diff_squared / 2.;
+        }
+        if i == rr_length - 1 {
+            println!("i = {}, local_diff_squared: {}", i, local_diff_squared)
         }
     }
     let modifier = 1.0 / (rr_length - none_counter) as f64;
