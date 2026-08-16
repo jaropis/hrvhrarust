@@ -483,6 +483,14 @@ impl RRRuns {
                 .runs_variances
                 .entry(run_type_enum)
                 .or_insert_with(|| vec![0.0; max_len]);
+            for i in (rr_index - length)..rr_index {
+                local_run_variance += ((&self.rr_intervals[i as usize + 1]
+                    - &self.rr_intervals[i as usize]
+                    - sd1_mean)
+                    .powi(2))
+                    / 2_f64.sqrt();
+            }
+            run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
         }
     }
     pub fn print_runs_variances(&self) {
