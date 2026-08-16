@@ -35,7 +35,7 @@ pub fn sd1_i(rr_intervals: &Vec<f64>, annotations: &Vec<Annotations>) -> (Vec<Op
                                 // but the runs can only start from 1 - each point in the PP plot contributes variance
                                 // so let's look for the runs in the SECOND vector in the PP - this is the only possibility
     for i in 1..(rr_intervals.len()) {
-        if annotations[i] != Annotations::N && annotations[i + 1] != Annotations::N {
+        if annotations[i] != Annotations::N && annotations[i - 1] != Annotations::N {
             point_sd1_i_vars[i] = None;
             none_counter += 1;
             continue;
@@ -50,6 +50,9 @@ pub fn sd1_i(rr_intervals: &Vec<f64>, annotations: &Vec<Annotations>) -> (Vec<Op
         if local_diff < 0.0 {
             point_sd1_i_vars[i] = Some(local_diff_squared / 2.);
             var_1_a += local_diff_squared / 2.;
+        }
+        if local_diff == 0.0 {
+            point_sd1_i_vars[i] = Some(0.0);
         }
         if i == rr_length - 1 {
             println!("i = {}, local_diff_squared: {}", i, local_diff_squared)
