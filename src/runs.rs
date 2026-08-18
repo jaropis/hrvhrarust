@@ -11,7 +11,7 @@ pub enum RunType {
     Acc = -1, // acceleration run
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum VarType {
     SD1,
     SD2,
