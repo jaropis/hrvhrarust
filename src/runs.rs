@@ -34,7 +34,7 @@ pub struct RRRuns {
     annotations: Vec<Annotations>,
     write_last_run: bool,
     accumulator: RunsAccumulator,
-    runs_variances: HashMap<RunType, Vec<f64>>,
+    runs_variances: HashMap<VarType, HashMap<RunType, Vec<f64>>>,
     analyzed: bool,
     max_dec: usize,
     max_acc: usize,
@@ -51,7 +51,7 @@ impl RRRuns {
             neu: HashMap::new(),
             runs_addresses: Vec::new(),
         };
-        let runs_variances: HashMap<RunType, Vec<f64>> = HashMap::new();
+        let runs_variances: HashMap<VarType, HashMap<RunType, Vec<f64>>> = HashMap::new();
         let mut mean_rr = 0.0;
         for rr_i in &rr {
             mean_rr += rr_i;
