@@ -1,5 +1,5 @@
 use crate::common::Annotations;
-use crate::runs_asym_helpers::{get_mean_for_sd1, sd1_i};
+use crate::runs_asym_helpers::sd_1_2_contribs;
 use std::cmp;
 use std::collections::HashMap;
 
@@ -9,6 +9,13 @@ pub enum RunType {
     Dec = 1,  // deceleration run
     Neu = 0,  // neutral run
     Acc = -1, // acceleration run
+}
+
+#[derive(Debug, Clone)]
+pub enum VarType {
+    SD1,
+    SD2,
+    SDNN,
 }
 
 // storing run statistics and addresses
@@ -459,9 +466,8 @@ impl RRRuns {
     }
     fn calculate_runs_variances(&mut self) {
         // getting the vector with all sd1_i related variances for each point + the modifier;
-        let (point_sd1_i_vars, modifier) = sd1_i(&self.rr_intervals, &self.annotations);
-        println!("vector is: {:?}", point_sd1_i_vars);
-        println!("runs addresses are: {:?}", self.accumulator.runs_addresses);
+        let (point_sd1_i_vars, point_sd2_vars, modifier) =
+            sd_1_2_contribs(&self.rr_intervals, &self.annotations);
         for run in &self.accumulator.runs_addresses {
             let rr_index = run[0];
             let length = run[1];
@@ -485,14 +491,16 @@ impl RRRuns {
                 .runs_variances
                 .entry(run_type_enum)
                 .or_insert_with(|| vec![0.0; max_len]);
-            let mut local_run_variance = 0.;
-            println!("seria od {}, do {}", rr_index - length + 1, rr_index);
+            let mut local_run_sd1_variance = 0.;
+            // println!("seria od {}, do {}", rr_index - length + 1, rr_index);
             for i in (rr_index - length + 1)..=rr_index {
                 println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
                 let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
-                local_run_variance += local_var1 * modifier;
+                let local_var2 = point_sd2_vars[i as usize].expect("THIS CANNOT HAPPEN");
+                local_run_sd1_variance += local_var1 * modifier;
             }
-            run_var[(length - 1) as usize] = run_var[(length - 1) as usize] + local_run_variance;
+            run_var[(length - 1) as usize] =
+                run_var[(length - 1) as usize] + local_run_sd1_variance;
         }
     }
     pub fn print_runs_variances(&self) {
