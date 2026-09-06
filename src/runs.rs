@@ -487,36 +487,47 @@ impl RRRuns {
             // i.e. it may return a reference to the vector of decelerations runs variances vector, each of the entries contains the variance of
             // a specific length and direction: index 0 - cumulative variance of all deceleration runs of length 1,
             // index 1: - cumulative variance of all deceleration runs of length 2 etc.
-            let run_var = self
-                .runs_variances
-                .entry(run_type_enum)
-                .or_insert_with(|| vec![0.0; max_len]);
             let mut local_run_sd1_variance = 0.;
+            let mut local_run_sd2_variance = 0.;
             // println!("seria od {}, do {}", rr_index - length + 1, rr_index);
             for i in (rr_index - length + 1)..=rr_index {
                 println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
                 let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 let local_var2 = point_sd2_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 local_run_sd1_variance += local_var1 * modifier;
+                local_run_sd2_variance += local_var2 * modifier;
             }
-            run_var[(length - 1) as usize] =
-                run_var[(length - 1) as usize] + local_run_sd1_variance;
+            let length_index = length - 1;
+            for (var_type, contribution) in [
+                (VarType::SD1, local_run_sd1_variance),
+                (VarType::SD2, local_run_sd2_variance),
+            ] {
+                let length_bins = self
+                    .runs_variances
+                    .entry(var_type)
+                    .or_default()
+                    .entry(run_type_enum)
+                    .or_insert_with(|| vec![0.0; max_len]);
+
+                length_bins[length_index as usize] += contribution;
+            }
         }
     }
     pub fn print_runs_variances(&self) {
-        let sum_var = self.sum_variances();
+        let (sum_var_sd1, sum_var_sd2) = self.sum_variances();
         println!(
-            "square root of the sum of all variances is: {}, individual are: {:?}",
-            sum_var, self.runs_variances
+            "square root of the sum of all variances is: {} and {}, individual are: {:?}",
+            sum_var_sd1, sum_var_sd2, self.runs_variances
         )
     }
-    fn sum_variances(&self) -> f64 {
-        let mut sum_var = 0.;
-        for (_, runvar) in &self.runs_variances {
-            for var in runvar {
-                sum_var += var;
-            }
+    fn sum_variances(&self) -> (f64, f64) {
+        let mut sum_var_sd1 = 0.;
+        let mut sum_var_sd2 = 0.;
+        for (var_type, mut variance_contrib) in
+            [(VarType::SD1, sum_var_sd1), (VarType::SD2, sum_var_sd2)]
+        {
+            let 
         }
-        return sum_var;
+        return (sum_var_sd1, sum_var_sd2);
     }
 }
