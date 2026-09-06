@@ -1,4 +1,5 @@
 use crate::common::Annotations;
+use crate::runs::VarType::SD1iD;
 use crate::runs_asym_helpers::sd_1_2_contribs;
 use std::cmp;
 use std::collections::HashMap;
@@ -17,6 +18,12 @@ pub enum VarType {
     SD1,
     SD2,
     SDNN,
+    SD1iD,
+    SD1iA,
+    SD2D,
+    SD2A,
+    SDNND,
+    SDNNA,
 }
 
 // storing run statistics and addresses
@@ -36,6 +43,7 @@ pub struct RRRuns {
     write_last_run: bool,
     accumulator: RunsAccumulator,
     runs_variances: HashMap<VarType, HashMap<RunType, Vec<f64>>>,
+    //total_vars: HashMap<VarType, f64>, // these will hold final variances, but calculated from runs, not in the ordinary fashion. Useful for testing
     analyzed: bool,
     max_dec: usize,
     max_acc: usize,
@@ -516,27 +524,72 @@ impl RRRuns {
     }
     pub fn print_runs_variances(&mut self) {
         let var_sums = self.sum_variances();
-        //let sd1_total: f64 = var_sums[&VarType::SD1].values().sum();
-        //let sd2_total: f64 = var_sums[&VarType::SD2].values().sum();
         println!(
             "square root of the sum of all variances is: {:?} , individual are: {:?}",
             var_sums, self.runs_variances
         )
     }
-    fn sum_variances(&mut self) -> HashMap<VarType, HashMap<RunType, f64>> {
-        let mut var_sums: HashMap<VarType, HashMap<RunType, f64>> = HashMap::new();
+    fn sum_variances(&self) -> HashMap<VarType, f64> {
+        let mut var_sums_by_run = HashMap::new();
+        let mut var_sums_full: HashMap<VarType, f64> = HashMap::new();
         for var_type in [VarType::SD1, VarType::SD2] {
-            let var_type_stats = self.runs_variances.entry(var_type.clone()).or_default();
-            let mut local_var_sum = 0.0;
+            let mut run_sums = HashMap::new();
+
             for run_type in [RunType::Dec, RunType::Acc, RunType::Neu] {
-                let var_vec = var_type_stats.entry(run_type).or_default();
-                for run_var in var_vec {
-                    local_var_sum += *run_var;
-                }
-                let local_map = var_sums.entry(var_type.clone()).or_default();
-                local_map.insert(run_type, local_var_sum);
+                let sum = self
+                    .runs_variances
+                    .get(&var_type)
+                    .and_then(|stats| stats.get(&run_type))
+                    .map_or(0.0, |variances| variances.iter().sum());
+
+                run_sums.insert(run_type, sum);
             }
+
+            var_sums_by_run.insert(var_type, run_sums);
         }
-        return var_sums;
+
+        var_sums_full.insert(
+            VarType::SD1,
+            var_sums_by_run[&VarType::SD1][&RunType::Dec]
+                + var_sums_by_run[&VarType::SD1][&RunType::Acc]
+                + var_sums_by_run[&VarType::SD1][&RunType::Neu],
+        );
+        var_sums_full.insert(
+            VarType::SD2,
+            var_sums_by_run[&VarType::SD2][&RunType::Dec]
+                + var_sums_by_run[&VarType::SD2][&RunType::Acc]
+                + var_sums_by_run[&VarType::SD2][&RunType::Neu],
+        );
+        var_sums_full.insert(
+            VarType::SDNN,
+            0.5 * (var_sums_full[&VarType::SD1] + var_sums_full[&VarType::SD2]),
+        );
+        var_sums_full.insert(
+            VarType::SD1iD,
+            var_sums_by_run[&VarType::SD1][&RunType::Dec],
+        );
+        var_sums_full.insert(
+            VarType::SD1iA,
+            var_sums_by_run[&VarType::SD1][&RunType::Acc],
+        );
+        var_sums_full.insert(
+            VarType::SD2D,
+            var_sums_by_run[&VarType::SD2][&RunType::Dec]
+                + 0.5 * var_sums_by_run[&VarType::SD2][&RunType::Neu],
+        );
+        var_sums_full.insert(
+            VarType::SD2A,
+            var_sums_by_run[&VarType::SD2][&RunType::Acc]
+                + 0.5 * var_sums_by_run[&VarType::SD2][&RunType::Neu],
+        );
+        var_sums_full.insert(
+            VarType::SDNND,
+            0.5 * (var_sums_full[&VarType::SD1iD] + var_sums_full[&VarType::SD2D]),
+        );
+        var_sums_full.insert(
+            VarType::SDNNA,
+            0.5 * (var_sums_full[&VarType::SD1iA] + var_sums_full[&VarType::SD2A]),
+        );
+        var_sums_full
     }
 }
