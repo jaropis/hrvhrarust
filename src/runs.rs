@@ -2,6 +2,7 @@ use crate::common::Annotations;
 use crate::runs_asym_helpers::sd_1_2_contribs;
 use std::cmp;
 use std::collections::HashMap;
+use std::hash::Hash;
 
 // defining run types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -513,21 +514,29 @@ impl RRRuns {
             }
         }
     }
-    pub fn print_runs_variances(&self) {
-        let (sum_var_sd1, sum_var_sd2) = self.sum_variances();
+    pub fn print_runs_variances(&mut self) {
+        let var_sums = self.sum_variances();
+        //let sd1_total: f64 = var_sums[&VarType::SD1].values().sum();
+        //let sd2_total: f64 = var_sums[&VarType::SD2].values().sum();
         println!(
-            "square root of the sum of all variances is: {} and {}, individual are: {:?}",
-            sum_var_sd1, sum_var_sd2, self.runs_variances
+            "square root of the sum of all variances is: {:?} , individual are: {:?}",
+            var_sums, self.runs_variances
         )
     }
-    fn sum_variances(&self) -> (f64, f64) {
-        let mut sum_var_sd1 = 0.;
-        let mut sum_var_sd2 = 0.;
-        for (var_type, mut variance_contrib) in
-            [(VarType::SD1, sum_var_sd1), (VarType::SD2, sum_var_sd2)]
-        {
-            let 
+    fn sum_variances(&mut self) -> HashMap<VarType, HashMap<RunType, f64>> {
+        let mut var_sums: HashMap<VarType, HashMap<RunType, f64>> = HashMap::new();
+        for var_type in [VarType::SD1, VarType::SD2] {
+            let var_type_stats = self.runs_variances.entry(var_type.clone()).or_default();
+            let mut local_var_sum = 0.0;
+            for run_type in [RunType::Dec, RunType::Acc, RunType::Neu] {
+                let var_vec = var_type_stats.entry(run_type).or_default();
+                for run_var in var_vec {
+                    local_var_sum += *run_var;
+                }
+                let local_map = var_sums.entry(var_type.clone()).or_default();
+                local_map.insert(run_type, local_var_sum);
+            }
         }
-        return (sum_var_sd1, sum_var_sd2);
+        return var_sums;
     }
 }
