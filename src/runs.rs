@@ -43,7 +43,7 @@ pub struct RRRuns {
     write_last_run: bool,
     accumulator: RunsAccumulator,
     runs_variances: HashMap<VarType, HashMap<RunType, Vec<f64>>>,
-    //total_vars: HashMap<VarType, f64>, // these will hold final variances, but calculated from runs, not in the ordinary fashion. Useful for testing
+    total_vars: HashMap<VarType, f64>, // these will hold final variances, but calculated from runs, not in the ordinary fashion. Useful for testing
     analyzed: bool,
     max_dec: usize,
     max_acc: usize,
@@ -61,6 +61,7 @@ impl RRRuns {
             runs_addresses: Vec::new(),
         };
         let runs_variances: HashMap<VarType, HashMap<RunType, Vec<f64>>> = HashMap::new();
+        let total_vars: HashMap<VarType, f64> = HashMap::new(); // this will hold variances calculated directly from runs. They MUST be exactly the same as those calculated by asym.rs
         let mut mean_rr = 0.0;
         for rr_i in &rr {
             mean_rr += rr_i;
@@ -72,6 +73,7 @@ impl RRRuns {
             rr_length: size,
             annotations: annot,
             runs_variances: runs_variances,
+            total_vars: total_vars,
             write_last_run,
             accumulator,
             analyzed: false,
@@ -523,13 +525,13 @@ impl RRRuns {
         }
     }
     pub fn print_runs_variances(&mut self) {
-        let var_sums = self.sum_variances();
+        self.sum_variances();
         println!(
             "square root of the sum of all variances is: {:?} , individual are: {:?}",
-            var_sums, self.runs_variances
+            self.total_vars, self.runs_variances
         )
     }
-    fn sum_variances(&self) -> HashMap<VarType, f64> {
+    fn sum_variances(&mut self) {
         let mut var_sums_by_run = HashMap::new();
         let mut var_sums_full: HashMap<VarType, f64> = HashMap::new();
         for var_type in [VarType::SD1, VarType::SD2] {
@@ -590,6 +592,6 @@ impl RRRuns {
             VarType::SDNNA,
             0.5 * (var_sums_full[&VarType::SD1iA] + var_sums_full[&VarType::SD2A]),
         );
-        var_sums_full
+        self.total_vars = var_sums_full;
     }
 }
