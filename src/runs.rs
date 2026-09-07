@@ -1,5 +1,5 @@
 use crate::common::Annotations;
-use crate::runs::VarType::SD1iD;
+use crate::common::VarType;
 use crate::runs_asym_helpers::sd_1_2_contribs;
 use std::cmp;
 use std::collections::HashMap;
@@ -11,19 +11,6 @@ pub enum RunType {
     Dec = 1,  // deceleration run
     Neu = 0,  // neutral run
     Acc = -1, // acceleration run
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum VarType {
-    SD1,
-    SD2,
-    SDNN,
-    SD1iD,
-    SD1iA,
-    SD2D,
-    SD2A,
-    SDNND,
-    SDNNA,
 }
 
 // storing run statistics and addresses
@@ -157,6 +144,7 @@ impl RRRuns {
             || self.annotations[running_rr_number + 1] != Annotations::N
         {
             self.set_max();
+            self.calculate_runs_variances();
             self.analyzed = true; // have to mark that this has been analyzed
             return; // returning early if we have jumped over all the recording and found no viable runs - this is an edge case
         }
@@ -213,6 +201,7 @@ impl RRRuns {
                     running_rr_number += 1;
                     if running_rr_number >= self.rr_intervals.len() - 1 {
                         self.set_max();
+                        self.calculate_runs_variances();
                         self.analyzed = true; // have to mark that this has been analyzed
                         return;
                     }
@@ -380,11 +369,8 @@ impl RRRuns {
             println!("the last run not needed");
         }
         self.set_max();
-        self.calculate_runs_variances();
         self.analyzed = true;
-        if self.analyzed {
-            self.sum_variances();
-        }
+        self.calculate_runs_variances();
     }
 
     // setting maximal runs lengths for future use
@@ -505,7 +491,7 @@ impl RRRuns {
             let mut local_run_sd2_variance = 0.;
             // println!("seria od {}, do {}", rr_index - length + 1, rr_index);
             for i in (rr_index - length + 1)..=rr_index {
-                println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
+                // println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
                 let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 let local_var2 = point_sd2_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 local_run_sd1_variance += local_var1 * modifier;
@@ -526,6 +512,7 @@ impl RRRuns {
                 length_bins[length_index as usize] += contribution;
             }
         }
+        self.sum_variances()
     }
     pub fn print_runs_variances(&mut self) {
         println!(
@@ -533,7 +520,21 @@ impl RRRuns {
             self.total_vars, self.runs_variances
         )
     }
+    pub fn get_runs_variances(&mut self) -> HashMap<VarType, f64> {
+        //println!("1 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
+        //println!("is this analyzed: {}", self.analyzed);
+        //println!("total vars: {:?}", self.total_vars);
+        if !self.analyzed {
+            //println!("2 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
+            self.analyze_runs();
+        }
+        //println!("total vars: {:?}", self.total_vars);
+        //println!("3 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
+        return self.total_vars.clone();
+    }
+
     fn sum_variances(&mut self) {
+        //println!("4 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
         let mut var_sums_by_run = HashMap::new();
         let mut var_sums_full: HashMap<VarType, f64> = HashMap::new();
         for var_type in [VarType::SD1, VarType::SD2] {

@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Annotations {
     N = 0,
     V = 1,
@@ -22,4 +22,17 @@ impl Annotations {
             .map(Annotations::annotation_from_code)
             .collect()
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum VarType {
+    SD1,
+    SD2,
+    SDNN,
+    SD1iD,
+    SD1iA,
+    SD2D,
+    SD2A,
+    SDNND,
+    SDNNA,
 }
