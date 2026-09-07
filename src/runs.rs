@@ -382,6 +382,9 @@ impl RRRuns {
         self.set_max();
         self.calculate_runs_variances();
         self.analyzed = true;
+        if self.analyzed {
+            self.sum_variances();
+        }
     }
 
     // setting maximal runs lengths for future use
@@ -525,7 +528,6 @@ impl RRRuns {
         }
     }
     pub fn print_runs_variances(&mut self) {
-        self.sum_variances();
         println!(
             "square root of the sum of all variances is: {:?} , individual are: {:?}",
             self.total_vars, self.runs_variances
