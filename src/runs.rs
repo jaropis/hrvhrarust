@@ -491,12 +491,13 @@ impl RRRuns {
             let mut local_run_sd2_variance = 0.;
             // println!("seria od {}, do {}", rr_index - length + 1, rr_index);
             for i in (rr_index - length + 1)..=rr_index {
-                // println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
+                println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
                 let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 let local_var2 = point_sd2_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 local_run_sd1_variance += local_var1 * modifier;
                 local_run_sd2_variance += local_var2 * modifier;
             }
+            println! {"modifier: {}", modifier};
             let length_index = length - 1;
             for (var_type, contribution) in [
                 (VarType::SD1, local_run_sd1_variance),
