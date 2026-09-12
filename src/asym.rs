@@ -20,6 +20,7 @@ pub struct AsymVarDesc {
     pub sd1d: f64,
     pub sd2a: f64,
     pub sd2d: f64,
+    pub sdnn_i: f64,
     pub sdnn_a: f64,
     pub sdnn_d: f64,
     analyzed: bool,
@@ -61,6 +62,7 @@ impl AsymVarDesc {
             sd1d: 1.0,
             sd2a: 1.0,
             sd2d: 1.0,
+            sdnn_i: 1.0,
             sdnn_a: 1.0,
             sdnn_d: 1.0,
             analyzed: false,
@@ -77,6 +79,7 @@ impl AsymVarDesc {
         (self.sd1_i, self.sd1d, self.sd1a) = self.sd1_i();
         self.sdnn_a = (1. / 2. * (self.sd1a.powi(2) + self.sd2a.powi(2))).sqrt();
         self.sdnn_d = (1. / 2. * (self.sd1d.powi(2) + self.sd2d.powi(2))).sqrt();
+        self.sdnn_i = (self.sdnn_a.powi(2) + self.sdnn_d.powi(2)).sqrt();
     }
 
     fn get_quality_stats(&self) -> QualityStats {
@@ -238,7 +241,7 @@ impl AsymVarDesc {
         );
     }
     pub fn print_asym_results(self) {
-        println!("the results are sdnn: {}, sd1: {}, sd1_i: {}, sd2: {}, sd1d: {}, sd1a: {}, sd2d: {}, sd2a: {}, sdnn_d: {}, sdnn_a: {}", 
+        println!("the results are sdnn: {}, sd1: {}, sd1_i: {}, sd2: {}, sd1d: {}, sd1a: {}, sd2d: {}, sd2a: {}, sdnn_i:{}, sdnn_d: {}, sdnn_a: {}", 
         self.sdnn, 
         self.sd1, 
         self.sd1_i, 
@@ -246,7 +249,8 @@ impl AsymVarDesc {
         self.sd1d, 
         self.sd1a, 
         self.sd2d, 
-        self.sd2a, 
+        self.sd2a,
+        (self.sdnn_a.powi(2) + self.sdnn_d.powi(2) ).sqrt(),
         self.sdnn_d, 
         self.sdnn_a);
     }

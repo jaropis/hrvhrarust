@@ -26,13 +26,13 @@ impl Annotations {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum VarType {
-    Var1,
+    Var1i,
     Var2,
-    VarNN,
+    VarNNi,
     Var1iD,
     Var1iA,
     Var2D,
     Var2A,
-    VarNND,
-    VarNNA,
+    VarNNiD,
+    VarNNiA,
 }

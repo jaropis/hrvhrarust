@@ -497,7 +497,7 @@ impl RRRuns {
             }
             let length_index = length - 1;
             for (var_type, contribution) in [
-                (VarType::Var1, local_run_sd1_variance),
+                (VarType::Var1i, local_run_sd1_variance),
                 (VarType::Var2, local_run_sd2_variance),
             ] {
                 let length_bins = self
@@ -528,7 +528,7 @@ impl RRRuns {
     fn sum_variances(&mut self) {
         let mut var_sums_by_run = HashMap::new();
         let mut var_sums_full: HashMap<VarType, f64> = HashMap::new();
-        for var_type in [VarType::Var1, VarType::Var2] {
+        for var_type in [VarType::Var1i, VarType::Var2] {
             let mut run_sums = HashMap::new();
 
             for run_type in [RunType::Dec, RunType::Acc, RunType::Neu] {
@@ -545,10 +545,10 @@ impl RRRuns {
         }
 
         var_sums_full.insert(
-            VarType::Var1,
-            var_sums_by_run[&VarType::Var1][&RunType::Dec]
-                + var_sums_by_run[&VarType::Var1][&RunType::Acc]
-                + var_sums_by_run[&VarType::Var1][&RunType::Neu],
+            VarType::Var1i,
+            var_sums_by_run[&VarType::Var1i][&RunType::Dec]
+                + var_sums_by_run[&VarType::Var1i][&RunType::Acc]
+                + var_sums_by_run[&VarType::Var1i][&RunType::Neu],
         );
         var_sums_full.insert(
             VarType::Var2,
@@ -557,16 +557,16 @@ impl RRRuns {
                 + var_sums_by_run[&VarType::Var2][&RunType::Neu],
         );
         var_sums_full.insert(
-            VarType::VarNN,
-            0.5 * (var_sums_full[&VarType::Var1] + var_sums_full[&VarType::Var2]),
+            VarType::VarNNi,
+            0.5 * (var_sums_full[&VarType::Var1i] + var_sums_full[&VarType::Var2]),
         );
         var_sums_full.insert(
             VarType::Var1iD,
-            var_sums_by_run[&VarType::Var1][&RunType::Dec],
+            var_sums_by_run[&VarType::Var1i][&RunType::Dec],
         );
         var_sums_full.insert(
             VarType::Var1iA,
-            var_sums_by_run[&VarType::Var1][&RunType::Acc],
+            var_sums_by_run[&VarType::Var1i][&RunType::Acc],
         );
         var_sums_full.insert(
             VarType::Var2D,
@@ -579,11 +579,11 @@ impl RRRuns {
                 + 0.5 * var_sums_by_run[&VarType::Var2][&RunType::Neu],
         );
         var_sums_full.insert(
-            VarType::VarNND,
+            VarType::VarNNiD,
             0.5 * (var_sums_full[&VarType::Var1iD] + var_sums_full[&VarType::Var2D]),
         );
         var_sums_full.insert(
-            VarType::VarNNA,
+            VarType::VarNNiA,
             0.5 * (var_sums_full[&VarType::Var1iA] + var_sums_full[&VarType::Var2A]),
         );
         self.total_vars = var_sums_full;
