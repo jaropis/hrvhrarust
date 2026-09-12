@@ -63,14 +63,10 @@ pub fn sd_1_2_contribs(
         }
         if local_diff == 0.0 {
             point_sd1_i_vars[i] = Some(0.0);
-            point_sd2_vars[i] = Some(local_l2_perp_dist_squared / 4.); // distributing the "on identity line" sd2 variance equally between d and a
+            point_sd2_vars[i] = Some(local_l2_perp_dist_squared / 2.);
         }
     }
     let modifier = 1.0 / (rr_length - none_counter) as f64;
-    println!(
-        "rr_length = {}, none_counter = {}, modifier = {}",
-        rr_length, none_counter, modifier
-    );
 
     return (point_sd1_i_vars, point_sd2_vars, modifier);
 }

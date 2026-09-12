@@ -12,6 +12,7 @@ use hrvhra_rust::runs::RRRuns;
 
 #[test]
 fn test_internal_consistency_12() -> io::Result<()> {
+    let num_threshold = 0.000000001;
     let rr_series = RRSeries::read_rr("tests/data/test12.csv")?;
     let mut rr = RRRuns::new(rr_series.rr.clone(), rr_series.annot.clone(), true);
     rr.get_full_runs();
@@ -20,9 +21,15 @@ fn test_internal_consistency_12() -> io::Result<()> {
     asym_var.analyze_asym_var();
     println!(
         "asym: {}; runs: {}",
-        asym_var.sd1_i,
-        runs_asym_vars[&VarType::SD1].sqrt()
+        asym_var.sd2,
+        runs_asym_vars[&VarType::Var2].sqrt()
     );
-    // assert!((asym_var.sd1 - runs_asym_vars[&VarType::SD1].sqrt()).abs() < 0.0000001);
+    assert!(asym_var.sd1 - runs_asym_vars[&VarType::Var1].sqrt().abs() < num_threshold);
+    assert!(
+        asym_var.sd1_i
+            - (runs_asym_vars[&VarType::Var1iD] + runs_asym_vars[&VarType::Var1iA]).sqrt()
+            < num_threshold
+    );
+    // assert!(asym_var.sd2 - (runs_asym_vars[&VarType::Var2]).sqrt() < num_threshold);
     Ok(())
 }

@@ -489,19 +489,16 @@ impl RRRuns {
             // index 1: - cumulative variance of all deceleration runs of length 2 etc.
             let mut local_run_sd1_variance = 0.;
             let mut local_run_sd2_variance = 0.;
-            // println!("seria od {}, do {}", rr_index - length + 1, rr_index);
             for i in (rr_index - length + 1)..=rr_index {
-                println!("index: {}, skladowe: {:?}", i, point_sd1_i_vars[i as usize]);
                 let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 let local_var2 = point_sd2_vars[i as usize].expect("THIS CANNOT HAPPEN");
                 local_run_sd1_variance += local_var1 * modifier;
                 local_run_sd2_variance += local_var2 * modifier;
             }
-            println! {"modifier: {}", modifier};
             let length_index = length - 1;
             for (var_type, contribution) in [
-                (VarType::SD1, local_run_sd1_variance),
-                (VarType::SD2, local_run_sd2_variance),
+                (VarType::Var1, local_run_sd1_variance),
+                (VarType::Var2, local_run_sd2_variance),
             ] {
                 let length_bins = self
                     .runs_variances
@@ -522,23 +519,16 @@ impl RRRuns {
         )
     }
     pub fn get_runs_variances(&mut self) -> HashMap<VarType, f64> {
-        //println!("1 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
-        //println!("is this analyzed: {}", self.analyzed);
-        //println!("total vars: {:?}", self.total_vars);
         if !self.analyzed {
-            //println!("2 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
             self.analyze_runs();
         }
-        //println!("total vars: {:?}", self.total_vars);
-        //println!("3 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
         return self.total_vars.clone();
     }
 
     fn sum_variances(&mut self) {
-        //println!("4 DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA DUPADUPADUPA");
         let mut var_sums_by_run = HashMap::new();
         let mut var_sums_full: HashMap<VarType, f64> = HashMap::new();
-        for var_type in [VarType::SD1, VarType::SD2] {
+        for var_type in [VarType::Var1, VarType::Var2] {
             let mut run_sums = HashMap::new();
 
             for run_type in [RunType::Dec, RunType::Acc, RunType::Neu] {
@@ -555,46 +545,46 @@ impl RRRuns {
         }
 
         var_sums_full.insert(
-            VarType::SD1,
-            var_sums_by_run[&VarType::SD1][&RunType::Dec]
-                + var_sums_by_run[&VarType::SD1][&RunType::Acc]
-                + var_sums_by_run[&VarType::SD1][&RunType::Neu],
+            VarType::Var1,
+            var_sums_by_run[&VarType::Var1][&RunType::Dec]
+                + var_sums_by_run[&VarType::Var1][&RunType::Acc]
+                + var_sums_by_run[&VarType::Var1][&RunType::Neu],
         );
         var_sums_full.insert(
-            VarType::SD2,
-            var_sums_by_run[&VarType::SD2][&RunType::Dec]
-                + var_sums_by_run[&VarType::SD2][&RunType::Acc]
-                + var_sums_by_run[&VarType::SD2][&RunType::Neu],
+            VarType::Var2,
+            var_sums_by_run[&VarType::Var2][&RunType::Dec]
+                + var_sums_by_run[&VarType::Var2][&RunType::Acc]
+                + var_sums_by_run[&VarType::Var2][&RunType::Neu],
         );
         var_sums_full.insert(
-            VarType::SDNN,
-            0.5 * (var_sums_full[&VarType::SD1] + var_sums_full[&VarType::SD2]),
+            VarType::VarNN,
+            0.5 * (var_sums_full[&VarType::Var1] + var_sums_full[&VarType::Var2]),
         );
         var_sums_full.insert(
-            VarType::SD1iD,
-            var_sums_by_run[&VarType::SD1][&RunType::Dec],
+            VarType::Var1iD,
+            var_sums_by_run[&VarType::Var1][&RunType::Dec],
         );
         var_sums_full.insert(
-            VarType::SD1iA,
-            var_sums_by_run[&VarType::SD1][&RunType::Acc],
+            VarType::Var1iA,
+            var_sums_by_run[&VarType::Var1][&RunType::Acc],
         );
         var_sums_full.insert(
-            VarType::SD2D,
-            var_sums_by_run[&VarType::SD2][&RunType::Dec]
-                + 0.5 * var_sums_by_run[&VarType::SD2][&RunType::Neu],
+            VarType::Var2D,
+            var_sums_by_run[&VarType::Var2][&RunType::Dec]
+                + 0.5 * var_sums_by_run[&VarType::Var2][&RunType::Neu],
         );
         var_sums_full.insert(
-            VarType::SD2A,
-            var_sums_by_run[&VarType::SD2][&RunType::Acc]
-                + 0.5 * var_sums_by_run[&VarType::SD2][&RunType::Neu],
+            VarType::Var2A,
+            var_sums_by_run[&VarType::Var2][&RunType::Acc]
+                + 0.5 * var_sums_by_run[&VarType::Var2][&RunType::Neu],
         );
         var_sums_full.insert(
-            VarType::SDNND,
-            0.5 * (var_sums_full[&VarType::SD1iD] + var_sums_full[&VarType::SD2D]),
+            VarType::VarNND,
+            0.5 * (var_sums_full[&VarType::Var1iD] + var_sums_full[&VarType::Var2D]),
         );
         var_sums_full.insert(
-            VarType::SDNNA,
-            0.5 * (var_sums_full[&VarType::SD1iA] + var_sums_full[&VarType::SD2A]),
+            VarType::VarNNA,
+            0.5 * (var_sums_full[&VarType::Var1iA] + var_sums_full[&VarType::Var2A]),
         );
         self.total_vars = var_sums_full;
     }
