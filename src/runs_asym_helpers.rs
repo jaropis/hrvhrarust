@@ -41,7 +41,7 @@ pub fn sd_1_2_contribs(
                                 // but the runs can only start from 1 - each point in the PP plot contributes variance
                                 // so let's look for the runs in the SECOND vector in the PP - this is the only possibility
     for i in 1..(rr_intervals.len()) {
-        if annotations[i] != Annotations::N && annotations[i - 1] != Annotations::N {
+        if annotations[i] != Annotations::N || annotations[i - 1] != Annotations::N {
             point_sd1_i_vars[i] = None;
             point_sd2_vars[i] = None;
             none_counter += 1;
@@ -67,6 +67,10 @@ pub fn sd_1_2_contribs(
         }
     }
     let modifier = 1.0 / (rr_length - none_counter) as f64;
+    println!(
+        "rr_length = {}, none_counter = {}, modifier = {}",
+        rr_length, none_counter, modifier
+    );
 
     return (point_sd1_i_vars, point_sd2_vars, modifier);
 }
