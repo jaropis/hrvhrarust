@@ -105,6 +105,74 @@ impl RRRuns {
 
         summary
     }
+    // this method returns a matrix with `max_length` rows, where `max_length` is the longest recorded run
+    // and for the row `i`, i.e. run of length i, the following gradation happens:
+    // [contrib to short term acc variance, contrib to short term dec variance, contrib to short term neu variance, contrib to long term acc variance, contrib to long term dec variance, contrib to long term neu variace]
+    pub fn get_vars_summary(&mut self) -> Vec<Vec<f64>> {
+        if !self.analyzed {
+            self.analyze_runs();
+        }
+        // calculating max length to determine number of rows needed
+        let max_length = cmp::max(cmp::max(self.max_acc, self.max_dec), self.max_neu);
+        // building summary rows
+        let mut summary: Vec<Vec<f64>> = Vec::new();
+        for i in 1..=max_length {
+            let row = vec![
+                // these will be contributions to short term variance (SD1i^2)
+                if i <= self.max_acc {
+                    *self.runs_variances[&VarType::Var1i][&RunType::Acc]
+                        .get(i)
+                        .unwrap_or(&0.0)
+                } else {
+                    0.0
+                },
+                if i <= self.max_dec {
+                    *self.runs_variances[&VarType::Var1i][&RunType::Dec]
+                        .get(i)
+                        .unwrap_or(&0.)
+                } else {
+                    0.
+                },
+                if i <= self.max_neu {
+                    *self.runs_variances[&VarType::Var1i][&RunType::Neu]
+                        .get(i)
+                        .unwrap_or(&0.0)
+                } else {
+                    0.
+                },
+                // these will be contributions to short term variance (SD2^2)
+                if i <= self.max_acc {
+                    *self.runs_variances[&VarType::Var2][&RunType::Acc]
+                        .get(i)
+                        .unwrap_or(&0.0)
+                } else {
+                    0.0
+                },
+                if i <= self.max_dec {
+                    *self.runs_variances[&VarType::Var2][&RunType::Dec]
+                        .get(i)
+                        .unwrap_or(&0.)
+                } else {
+                    0.
+                },
+                if i <= self.max_neu {
+                    *self.runs_variances[&VarType::Var2][&RunType::Neu]
+                        .get(i)
+                        .unwrap_or(&0.0)
+                } else {
+                    0.
+                },
+            ];
+            summary.push(row);
+        }
+
+        // if summary is empty (no runs found), return a single row of zeros
+        if summary.is_empty() {
+            summary.push(vec![0., 0., 0., 0., 0., 0.]);
+        }
+
+        summary
+    }
     pub fn get_nonzero_length(&self, map: &HashMap<usize, i32>) -> usize {
         let mut max: &usize = &0;
         for k in map.keys() {
@@ -381,11 +449,16 @@ impl RRRuns {
         self.max_neu = self.get_nonzero_length(&self.accumulator.neu);
     }
     // getting full runs
-    pub fn get_full_runs(&mut self) -> &RunsAccumulator {
+    pub fn get_full_runs(
+        &mut self,
+    ) -> (
+        &RunsAccumulator,
+        &HashMap<VarType, HashMap<RunType, Vec<f64>>>,
+    ) {
         if !self.analyzed {
             self.analyze_runs();
         }
-        &self.accumulator
+        (&self.accumulator, &self.runs_variances)
     }
 
     // printing runs
