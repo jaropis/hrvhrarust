@@ -116,7 +116,7 @@ impl RRRuns {
         let max_length = cmp::max(cmp::max(self.max_acc, self.max_dec), self.max_neu);
         // building summary rows
         let mut summary: Vec<Vec<f64>> = Vec::new();
-        for i in 1..=max_length {
+        for i in 0..max_length {
             let row = vec![
                 // these will be contributions to short term variance (SD1i^2)
                 if i <= self.max_acc {
@@ -140,7 +140,7 @@ impl RRRuns {
                 } else {
                     0.
                 },
-                // these will be contributions to short term variance (SD2^2)
+                // these will be contributions to long term variance (SD2^2)
                 if i <= self.max_acc {
                     *self.runs_variances[&VarType::Var2][&RunType::Acc]
                         .get(i)
@@ -168,6 +168,7 @@ impl RRRuns {
 
         // if summary is empty (no runs found), return a single row of zeros
         if summary.is_empty() {
+            println!("summary is empty???");
             summary.push(vec![0., 0., 0., 0., 0., 0.]);
         }
 
