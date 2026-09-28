@@ -174,6 +174,11 @@ impl RRRuns {
 
         summary
     }
+    pub fn get_runs(mut self) -> (Vec<Vec<i32>>, Vec<Vec<f64>>) {
+        let runs_summary = self.get_runs_summary();
+        let vars_summary = self.get_vars_summary();
+        (runs_summary.clone(), vars_summary.clone())
+    }
     pub fn get_nonzero_length(&self, map: &HashMap<usize, i32>) -> usize {
         let mut max: &usize = &0;
         for k in map.keys() {
@@ -564,8 +569,32 @@ impl RRRuns {
             let mut local_run_sd1_variance = 0.;
             let mut local_run_sd2_variance = 0.;
             for i in (rr_index - length + 1)..=rr_index {
-                let local_var1 = point_sd1_i_vars[i as usize].expect("THIS CANNOT HAPPEN");
-                let local_var2 = point_sd2_vars[i as usize].expect("THIS CANNOT HAPPEN");
+                let point_index = i as usize;
+                let sd1_contribution = point_sd1_i_vars.get(point_index).copied().flatten();
+                let sd2_contribution = point_sd2_vars.get(point_index).copied().flatten();
+                let (local_var1, local_var2) = match (sd1_contribution, sd2_contribution) {
+                    (Some(local_var1), Some(local_var2)) => (local_var1, local_var2),
+                    contributions => {
+                        let poincare_pair = point_index.checked_sub(1).and_then(|previous_index| {
+                            self.rr_intervals
+                                .get(previous_index)
+                                .zip(self.rr_intervals.get(point_index))
+                        });
+                        let annotation_pair =
+                            point_index.checked_sub(1).and_then(|previous_index| {
+                                self.annotations
+                                    .get(previous_index)
+                                    .zip(self.annotations.get(point_index))
+                            });
+
+                        panic!(
+                            "missing variance contribution: run={run:?}, point_index={point_index}, \
+                             Poincare(x_i, x_ii)={poincare_pair:?}, \
+                             annotations(previous, current)={annotation_pair:?}, \
+                             contributions(sd1, sd2)={contributions:?}"
+                        );
+                    }
+                };
                 local_run_sd1_variance += local_var1 * modifier;
                 local_run_sd2_variance += local_var2 * modifier;
             }
